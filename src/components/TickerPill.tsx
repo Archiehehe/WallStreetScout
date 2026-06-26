@@ -4,7 +4,7 @@ export function TickerPill({ ticker, onClick }: { ticker: string; onClick?: () =
   return (
     <Badge
       variant="outline"
-      className="cursor-pointer font-mono text-xs font-medium tracking-tight px-2 py-0.5 rounded-full border-[#CBD5E1] bg-white text-[#334155] hover:bg-[#F8FAFC] hover:border-[#2563EB] hover:text-[#2563EB] transition-colors"
+      className="cursor-pointer font-mono text-xs font-medium tracking-tight px-2 py-0.5 rounded-full border-[#2A2A2A] bg-[#0A0A0A] text-[#9CA3AF] hover:bg-[#1A1A1A] hover:border-[#3B82F6] hover:text-[#3B82F6] transition-colors"
       onClick={onClick}
     >
       {ticker}

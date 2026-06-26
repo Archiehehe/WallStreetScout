@@ -33,17 +33,17 @@ export function FilterBar({
   return (
     <div className="flex flex-wrap items-center gap-2 mb-4">
       <div className="relative flex-1 min-w-[200px] max-w-xs">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-[#94A3B8]" />
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-[#6B7280]" />
         <Input
           placeholder="Search articles..."
-          className="pl-8 h-9 text-sm border-[#E2E8F0] bg-white placeholder:text-[#94A3B8]"
+          className="pl-8 h-9 text-sm border-[#1F1F1F] bg-[#0A0A0A] placeholder:text-[#6B7280]"
           value={searchQuery}
           onChange={(e) => onSearchChange?.(e.target.value)}
         />
       </div>
       {firms.length > 0 && (
         <Select value={selectedFirm || 'all'} onValueChange={(v) => onFirmChange?.(v === 'all' ? '' : v ?? '')}>
-          <SelectTrigger className="h-9 text-xs w-[130px] border-[#E2E8F0] bg-white text-[#475569]">
+          <SelectTrigger className="h-9 text-xs w-[130px] border-[#1F1F1F] bg-[#0A0A0A] text-[#9CA3AF]">
             <SelectValue placeholder="All firms" />
           </SelectTrigger>
           <SelectContent>
@@ -54,7 +54,7 @@ export function FilterBar({
       )}
       {sectors.length > 0 && (
         <Select value={selectedSector || 'all'} onValueChange={(v) => onSectorChange?.(v === 'all' ? '' : v ?? '')}>
-          <SelectTrigger className="h-9 text-xs w-[130px] border-[#E2E8F0] bg-white text-[#475569]">
+          <SelectTrigger className="h-9 text-xs w-[130px] border-[#1F1F1F] bg-[#0A0A0A] text-[#9CA3AF]">
             <SelectValue placeholder="All sectors" />
           </SelectTrigger>
           <SelectContent>
@@ -65,7 +65,7 @@ export function FilterBar({
       )}
       {regions.length > 0 && (
         <Select value={selectedRegion || 'all'} onValueChange={(v) => onRegionChange?.(v === 'all' ? '' : v ?? '')}>
-          <SelectTrigger className="h-9 text-xs w-[130px] border-[#E2E8F0] bg-white text-[#475569]">
+          <SelectTrigger className="h-9 text-xs w-[130px] border-[#1F1F1F] bg-[#0A0A0A] text-[#9CA3AF]">
             <SelectValue placeholder="All regions" />
           </SelectTrigger>
           <SelectContent>
@@ -76,7 +76,7 @@ export function FilterBar({
       )}
       {themes.length > 0 && (
         <Select value={selectedTheme || 'all'} onValueChange={(v) => onThemeChange?.(v === 'all' ? '' : v ?? '')}>
-          <SelectTrigger className="h-9 text-xs w-[130px] border-[#E2E8F0] bg-white text-[#475569]">
+          <SelectTrigger className="h-9 text-xs w-[130px] border-[#1F1F1F] bg-[#0A0A0A] text-[#9CA3AF]">
             <SelectValue placeholder="All themes" />
           </SelectTrigger>
           <SelectContent>

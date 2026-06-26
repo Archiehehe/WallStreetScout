@@ -6,7 +6,6 @@ import { EmptyState } from '@/components/EmptyState'
 import { LoadingState } from '@/components/LoadingState'
 import { ErrorState } from '@/components/ErrorState'
 import { useRouter } from 'next/navigation'
-import { getSnapJudgementUrl } from '@/lib/integrations/snapJudgement'
 
 interface BasketData {
   id: string
@@ -70,10 +69,6 @@ export default function BasketsPage() {
     await fetch(`/api/baskets/${basket.id}/run-metrics`, { method: 'POST' })
   }
 
-  const handleAnalyze = (basket: BasketData) => {
-    window.open(getSnapJudgementUrl(basket.tickers), '_blank', 'noopener,noreferrer')
-  }
-
   if (error) return <ErrorState message={error} />
   if (loading) return <LoadingState />
 
@@ -103,7 +98,6 @@ export default function BasketsPage() {
               createdAt={b.createdAt}
               onRunMetrics={() => handleRunMetrics(b)}
               onAddAllToWatchlist={() => handleAddAllToWatchlist(b)}
-              onAnalyze={() => handleAnalyze(b)}
               onExportCsv={() => handleExportCsv(b)}
               onDelete={() => handleDelete(b.id)}
             />

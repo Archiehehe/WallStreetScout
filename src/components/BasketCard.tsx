@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { FirmBadge } from '@/components/FirmBadge'
 import { ThemeBadge, SectorBadge, RegionBadge } from '@/components/ThemeBadge'
 import { TickerPill } from '@/components/TickerPill'
-import { TrendingUp, Eye, Download, Trash2, Zap } from 'lucide-react'
+import { TrendingUp, Eye, Download, Trash2 } from 'lucide-react'
 
 interface BasketCardProps {
   id: string
@@ -19,7 +19,6 @@ interface BasketCardProps {
   metricsStatus?: string
   onRunMetrics?: () => void
   onAddAllToWatchlist?: () => void
-  onAnalyze?: () => void
   onExportCsv?: () => void
   onDelete?: () => void
 }
@@ -34,7 +33,6 @@ export function BasketCard({
   createdAt,
   onRunMetrics,
   onAddAllToWatchlist,
-  onAnalyze,
   onExportCsv,
   onDelete,
 }: BasketCardProps) {
@@ -43,11 +41,11 @@ export function BasketCard({
   })
 
   return (
-    <Card className="border border-[#E2E8F0] bg-white hover:border-[#CBD5E1] transition-colors shadow-sm">
+    <Card className="border border-[#1F1F1F] bg-[#0A0A0A] hover:border-[#3B82F6]/40 transition-colors shadow-sm">
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-1">
           <div>
-            <h3 className="text-sm font-semibold text-[#0F172A]">{name}</h3>
+            <h3 className="text-sm font-semibold text-[#E2E8F0]">{name}</h3>
             <div className="flex flex-wrap gap-1 mt-1.5">
               {firm && <FirmBadge firm={firm} />}
               {theme && <ThemeBadge theme={theme} />}
@@ -57,9 +55,9 @@ export function BasketCard({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-[#64748B] mt-2 mb-2">
+        <div className="flex items-center gap-2 text-xs text-[#9CA3AF] mt-2 mb-2">
           <span>Created {date}</span>
-          <span className="text-[#CBD5E1]">·</span>
+          <span className="text-[#374151]">·</span>
           <span>{tickers.length} stocks</span>
         </div>
 
@@ -69,20 +67,17 @@ export function BasketCard({
           ))}
         </div>
 
-        <div className="flex flex-wrap gap-1 pt-1 border-t border-[#F1F5F9]">
-          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-[#64748B] hover:text-[#2563EB] hover:bg-[#EFF6FF]" onClick={onRunMetrics}>
+        <div className="flex flex-wrap gap-1 pt-1 border-t border-[#1F1F1F]">
+          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-[#9CA3AF] hover:text-[#3B82F6] hover:bg-[#1A1A1A]" onClick={onRunMetrics}>
             <TrendingUp className="h-3 w-3" /> Metrics
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-[#64748B] hover:text-[#2563EB] hover:bg-[#EFF6FF]" onClick={onAddAllToWatchlist}>
+          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-[#9CA3AF] hover:text-[#3B82F6] hover:bg-[#1A1A1A]" onClick={onAddAllToWatchlist}>
             <Eye className="h-3 w-3" /> Watchlist
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-[#64748B] hover:text-[#2563EB] hover:bg-[#EFF6FF]" onClick={onAnalyze}>
-            <Zap className="h-3 w-3" /> Analyze
-          </Button>
-          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-[#64748B] hover:text-[#2563EB] hover:bg-[#EFF6FF]" onClick={onExportCsv}>
+          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-[#9CA3AF] hover:text-[#3B82F6] hover:bg-[#1A1A1A]" onClick={onExportCsv}>
             <Download className="h-3 w-3" /> CSV
           </Button>
-          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-[#EF4444] hover:text-[#DC2626] hover:bg-[#FEF2F2]" onClick={onDelete}>
+          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-[#EF4444] hover:text-[#EF4444] hover:bg-[#2A0000]" onClick={onDelete}>
             <Trash2 className="h-3 w-3" />
           </Button>
         </div>

@@ -2,7 +2,7 @@ import { Badge } from '@/components/ui/badge'
 
 export function ThemeBadge({ theme }: { theme: string }) {
   return (
-    <Badge variant="secondary" className="text-[11px] bg-cyan-50 text-cyan-700 border-cyan-200 font-medium px-1.5 py-0.5">
+    <Badge variant="secondary" className="text-[11px] bg-cyan-950/50 text-cyan-400 border-cyan-800 font-medium px-1.5 py-0.5">
       {theme}
     </Badge>
   )
@@ -10,7 +10,7 @@ export function ThemeBadge({ theme }: { theme: string }) {
 
 export function SectorBadge({ sector }: { sector: string }) {
   return (
-    <Badge variant="outline" className="text-[11px] text-slate-500 border-slate-200 font-medium px-1.5 py-0.5">
+    <Badge variant="outline" className="text-[11px] text-zinc-400 border-zinc-700 font-medium px-1.5 py-0.5">
       {sector}
     </Badge>
   )
@@ -18,7 +18,7 @@ export function SectorBadge({ sector }: { sector: string }) {
 
 export function RegionBadge({ region }: { region: string }) {
   return (
-    <Badge variant="outline" className="text-[11px] border-blue-200 text-blue-600 font-medium px-1.5 py-0.5">
+    <Badge variant="outline" className="text-[11px] border-blue-800 text-blue-400 font-medium px-1.5 py-0.5">
       {region}
     </Badge>
   )
@@ -26,13 +26,13 @@ export function RegionBadge({ region }: { region: string }) {
 
 export function SourceTypeBadge({ type }: { type: string }) {
   const colorMap: Record<string, string> = {
-    primary: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    media: 'bg-amber-50 text-amber-700 border-amber-200',
-    newsletter: 'bg-cyan-50 text-cyan-700 border-cyan-200',
-    manual: 'bg-slate-50 text-slate-500 border-slate-200',
+    primary: 'bg-emerald-950/50 text-emerald-400 border-emerald-800',
+    media: 'bg-amber-950/50 text-amber-400 border-amber-800',
+    newsletter: 'bg-cyan-950/50 text-cyan-400 border-cyan-800',
+    manual: 'bg-zinc-900/50 text-zinc-400 border-zinc-700',
   }
   return (
-    <Badge className={`${colorMap[type] || 'bg-slate-50 text-slate-500 border-slate-200'} border text-[11px] capitalize font-medium px-1.5 py-0.5`} variant="outline">
+    <Badge className={`${colorMap[type] || 'bg-zinc-900/50 text-zinc-400 border-zinc-700'} border text-[11px] capitalize font-medium px-1.5 py-0.5`} variant="outline">
       {type}
     </Badge>
   )

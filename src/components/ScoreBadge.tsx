@@ -3,13 +3,13 @@ import { Badge } from '@/components/ui/badge'
 export function ScoreBadge({ score }: { score: number }) {
   let color: string
   if (score >= 15) {
-    color = 'bg-emerald-50 text-emerald-700 border-emerald-200'
+    color = 'bg-emerald-900/40 text-emerald-400 border-emerald-800'
   } else if (score >= 10) {
-    color = 'bg-blue-50 text-blue-700 border-blue-200'
+    color = 'bg-blue-900/40 text-blue-400 border-blue-800'
   } else if (score >= 7) {
-    color = 'bg-amber-50 text-amber-700 border-amber-200'
+    color = 'bg-amber-900/40 text-amber-400 border-amber-800'
   } else {
-    color = 'bg-slate-50 text-slate-400 border-slate-200'
+    color = 'bg-zinc-900/40 text-zinc-500 border-zinc-800'
   }
 
   return (

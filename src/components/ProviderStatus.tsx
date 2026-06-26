@@ -10,7 +10,7 @@ export function ProviderStatus({ name, configured }: ProviderStatusProps) {
     <div className="flex items-center justify-between py-1">
       <span className="text-sm font-mono">{name}</span>
       {configured ? (
-        <Badge variant="outline" className="text-xs text-green-600 border-green-300">
+        <Badge variant="outline" className="text-xs text-green-400 border-green-700">
           Configured
         </Badge>
       ) : (

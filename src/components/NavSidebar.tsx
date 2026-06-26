@@ -19,13 +19,13 @@ export function NavSidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="w-56 border-r border-border bg-white flex flex-col shrink-0">
+    <aside className="w-56 border-r border-border bg-[#050505] flex flex-col shrink-0">
       <div className="px-4 pt-5 pb-4 border-b border-border">
         <Link href="/feed" className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shadow-sm shadow-primary/30">
             <BookOpen className="h-4 w-4 text-white" />
           </div>
-          <span className="font-semibold text-sm text-[#0F172A] tracking-tight">IdeaFeed</span>
+          <span className="font-semibold text-sm text-[#E2E8F0] tracking-tight">IdeaFeed</span>
         </Link>
       </div>
       <nav className="flex-1 px-2 py-4 space-y-0.5">
@@ -38,12 +38,12 @@ export function NavSidebar() {
               className={cn(
                 'flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
                 active
-                  ? 'bg-[#EFF6FF] text-[#2563EB] font-medium'
-                  : 'text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]',
+                  ? 'bg-[#1A1A1A] text-[#F59E0B] font-medium'
+                  : 'text-[#9CA3AF] hover:text-[#E2E8F0] hover:bg-[#0A0A0A]',
               )}
             >
               <Icon className={cn('h-4 w-4 shrink-0',
-                active ? 'text-[#2563EB]' : 'text-[#94A3B8]',
+                active ? 'text-[#F59E0B]' : 'text-[#6B7280]',
               )} />
               {label}
             </Link>
@@ -51,7 +51,7 @@ export function NavSidebar() {
         })}
       </nav>
       <div className="px-4 py-3 border-t border-border">
-        <p className="text-[11px] text-[#94A3B8] tracking-wider uppercase font-medium">
+        <p className="text-[11px] text-[#6B7280] tracking-wider uppercase font-medium">
           Institutional Feed
         </p>
       </div>
