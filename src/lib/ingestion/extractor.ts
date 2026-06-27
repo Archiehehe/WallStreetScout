@@ -77,9 +77,6 @@ export function extractFromArticle(
   if (sourceType === 'primary') {
     scoreBreakdown['Primary source'] = 3
   }
-  if (sourceType === 'media' && tickers.length > 0) {
-    scoreBreakdown['Free media with tickers'] = 2
-  }
   if (sector !== 'Unknown' && region !== 'Unknown') {
     scoreBreakdown['Sector and region detected'] = 2
   }

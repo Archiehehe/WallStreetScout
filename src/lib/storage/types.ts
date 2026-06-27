@@ -2,7 +2,7 @@ export interface Source {
   id: string
   name: string
   domain: string
-  sourceType: 'primary' | 'media' | 'newsletter' | 'manual'
+  sourceType: 'primary'
   rssUrl?: string
   sitemapUrl?: string
   parserType?: string

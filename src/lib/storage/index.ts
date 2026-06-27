@@ -1,25 +1,25 @@
 import type { Store } from './types'
 import { createJsonStore } from './jsonStore'
-import { createSupabaseStore } from './supabaseStore'
+import { createNeonStore } from './neonStore'
 
 let store: Store | null = null
 let storeMode: StorageMode | null = null
 
-export type StorageMode = 'supabase' | 'local-dev' | 'misconfigured'
+export type StorageMode = 'neon' | 'local-dev' | 'misconfigured'
 
 export class StorageConfigurationError extends Error {
-  constructor(message = 'Supabase is not configured for production storage.') {
+  constructor(message = 'Neon is not configured for production storage.') {
     super(message)
     this.name = 'StorageConfigurationError'
   }
 }
 
-export function isSupabaseConfigured(): boolean {
-  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY)
+export function isNeonConfigured(): boolean {
+  return Boolean(process.env.DATABASE_URL)
 }
 
 export function getStorageMode(): StorageMode {
-  if (isSupabaseConfigured()) return 'supabase'
+  if (isNeonConfigured()) return 'neon'
   if (process.env.NODE_ENV === 'development') return 'local-dev'
   return 'misconfigured'
 }
@@ -29,13 +29,13 @@ export function getStore(): Store {
 
   storeMode = getStorageMode()
 
-  if (storeMode === 'supabase') {
-    store = createSupabaseStore()
+  if (storeMode === 'neon') {
+    store = createNeonStore()
   } else if (storeMode === 'local-dev') {
     store = createJsonStore()
   } else {
     throw new StorageConfigurationError(
-      'Supabase not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY environment variables. ' +
+      'Neon not configured. Set the DATABASE_URL environment variable. ' +
       'JSON file store is only available in development mode.'
     )
   }

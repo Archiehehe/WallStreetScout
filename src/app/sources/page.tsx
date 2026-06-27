@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { EmptyState } from '@/components/EmptyState'
 import { LoadingState } from '@/components/LoadingState'
 import { ErrorState } from '@/components/ErrorState'
@@ -26,7 +25,7 @@ interface SourceItem {
   notes?: string
 }
 
-const EMPTY_SOURCE = { name: '', domain: '', sourceType: 'media', rssUrl: '', parserType: 'generic', enabled: true, qualityScore: 5 }
+const EMPTY_SOURCE = { name: '', domain: '', sourceType: 'primary', rssUrl: '', parserType: 'generic', enabled: true, qualityScore: 5 }
 
 export default function SourcesPage() {
   const [sources, setSources] = useState<SourceItem[]>([])
@@ -165,18 +164,6 @@ export default function SourcesPage() {
                   <Input value={formData.domain} onChange={(e) => setFormData({ ...formData, domain: e.target.value })} />
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground">Type</label>
-                  <Select value={formData.sourceType} onValueChange={(v) => setFormData({ ...formData, sourceType: v ?? 'media' })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="primary">Primary</SelectItem>
-                      <SelectItem value="media">Media</SelectItem>
-                      <SelectItem value="newsletter">Newsletter</SelectItem>
-                      <SelectItem value="manual">Manual</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
                   <label className="text-xs text-muted-foreground">RSS URL (optional)</label>
                   <Input value={formData.rssUrl} onChange={(e) => setFormData({ ...formData, rssUrl: e.target.value })} />
                 </div>
@@ -190,7 +177,7 @@ export default function SourcesPage() {
       {sources.length === 0 ? (
         <EmptyState
           title="No sources configured"
-          description="Add institutional, bank, or media sources for the scanner to monitor."
+          description="Add institutional and bank sources for the scanner to monitor."
           actions={[
             { label: 'Add Source', onClick: () => setAddDialogOpen(true) },
             { label: 'Import starter sources', onClick: handleImportStarters },
@@ -252,18 +239,6 @@ export default function SourcesPage() {
                 <div>
                   <label className="text-xs text-muted-foreground">Domain</label>
                   <Input value={formData.domain} onChange={(e) => setFormData({ ...formData, domain: e.target.value })} />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Type</label>
-                  <Select value={formData.sourceType} onValueChange={(v) => setFormData({ ...formData, sourceType: v ?? 'media' })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="primary">Primary</SelectItem>
-                      <SelectItem value="media">Media</SelectItem>
-                      <SelectItem value="newsletter">Newsletter</SelectItem>
-                      <SelectItem value="manual">Manual</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground">RSS URL (optional)</label>

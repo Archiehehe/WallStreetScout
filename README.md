@@ -1,4 +1,10 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WallStreetScout
+
+WallStreetScout extracts screenable stock baskets from primary institutional research sources.
+
+## Database
+
+Production storage uses Neon Postgres through `DATABASE_URL`. Apply the schema in `db/schema.sql` to the Neon database connected to Vercel.
 
 ## Getting Started
 

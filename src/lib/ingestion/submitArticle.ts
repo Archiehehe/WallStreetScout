@@ -216,11 +216,11 @@ async function resolveSource(
     return await store.createSource({
       name: domain,
       domain,
-      sourceType: 'manual',
+      sourceType: 'primary',
       parserType: 'generic',
       enabled: true,
       qualityScore: 5,
-      notes: 'Created from manual URL submission.',
+      notes: 'Created from submitted URL.',
     })
   } catch {
     const createdByRace = await store.getSourceByDomain(domain)

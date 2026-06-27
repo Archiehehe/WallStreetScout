@@ -4,7 +4,7 @@ export function setupRequiredResponse(message?: string): Response {
   return Response.json(
     {
       error: 'setup_required',
-      message: message ?? 'Supabase is not configured. Add SUPABASE_URL and SUPABASE_ANON_KEY to use production storage.',
+      message: message ?? 'Neon is not configured. Add DATABASE_URL to use production storage.',
     },
     { status: 503 },
   )
@@ -17,7 +17,7 @@ export function errorResponse(message: string, status = 400, extra?: Record<stri
 export function handleApiError(error: unknown): Response {
   if (
     error instanceof StorageConfigurationError ||
-    (error instanceof Error && error.message.toLowerCase().includes('supabase not configured'))
+    (error instanceof Error && error.message.toLowerCase().includes('neon not configured'))
   ) {
     return setupRequiredResponse(error instanceof Error ? error.message : undefined)
   }

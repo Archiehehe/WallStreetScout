@@ -21,7 +21,7 @@ const PROVIDER_VARS = [
   { name: 'SentiSense', envVar: 'SENTISENSE_API_KEY' },
   { name: 'API Ninjas', envVar: 'API_NINJAS_KEY' },
   { name: 'Earnings API', envVar: 'EARNINGS_API_KEY' },
-  { name: 'Supabase URL', envVar: 'SUPABASE_URL' },
+  { name: 'Neon Database', envVar: 'DATABASE_URL' },
   { name: 'Cron Secret', envVar: 'CRON_SECRET' },
   { name: 'SnapJudgement', envVar: 'NEXT_PUBLIC_SNAPJUDGEMENT_URL' },
 ]
@@ -120,7 +120,7 @@ export default function SettingsPage() {
   if (loading) return <LoadingState />
 
   const configuredCount = Object.values(providerStatus).filter(Boolean).length
-  const isSupabase = providerStatus['Supabase URL']
+  const isNeon = providerStatus['Neon Database']
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
@@ -132,9 +132,9 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs">Supabase connected</span>
-            <Badge variant={isSupabase ? 'outline' : 'destructive'} className="text-xs">
-              {isSupabase ? 'Connected' : 'Not configured'}
+            <span className="text-xs">Neon connected</span>
+            <Badge variant={isNeon ? 'outline' : 'destructive'} className="text-xs">
+              {isNeon ? 'Connected' : 'Not configured'}
             </Badge>
           </div>
           <div className="flex items-center justify-between">
@@ -146,7 +146,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <span className="text-xs">Finance APIs configured</span>
             <Badge variant="outline" className="text-xs">
-              {configuredCount - (isSupabase ? 1 : 0) - (providerStatus['Cron Secret'] ? 1 : 0) - (providerStatus['SnapJudgement'] ? 1 : 0)} / {PROVIDER_VARS.length - 3}
+              {configuredCount - (isNeon ? 1 : 0) - (providerStatus['Cron Secret'] ? 1 : 0) - (providerStatus['SnapJudgement'] ? 1 : 0)} / {PROVIDER_VARS.length - 3}
             </Badge>
           </div>
           <div className="flex items-center justify-between">
@@ -158,7 +158,7 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <span className="text-xs">Storage mode</span>
             <Badge variant="outline" className="text-xs">
-              {isSupabase ? 'Supabase (production)' : 'Local file (development)'}
+              {isNeon ? 'Neon (production)' : 'Local file (development)'}
             </Badge>
           </div>
           <div className="flex items-center justify-between">
@@ -241,8 +241,8 @@ export default function SettingsPage() {
           <CardTitle className="text-sm">About</CardTitle>
         </CardHeader>
         <CardContent className="text-xs text-muted-foreground space-y-1">
-          <p>Institutional Idea Feed</p>
-          <p>Extracts screenable stock baskets from institutional research and financial media.</p>
+          <p>WallStreetScout</p>
+          <p>Extracts screenable stock baskets from institutional research.</p>
           <p>Score threshold: 8+</p>
         </CardContent>
       </Card>
