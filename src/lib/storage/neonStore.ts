@@ -40,11 +40,19 @@ function writeEntries(obj: Row): [string[], unknown[]] {
   for (const [key, value] of Object.entries(obj)) {
     if (value !== undefined) {
       columns.push(toSnakeCase(key))
-      values.push(value)
+      values.push(toDbValue(value))
     }
   }
 
   return [columns, values]
+}
+
+function toDbValue(value: unknown): unknown {
+  if (value === null) return null
+  if (Array.isArray(value) || typeof value === 'object') {
+    return JSON.stringify(value)
+  }
+  return value
 }
 
 function insertQuery(table: string, obj: Row): [string, unknown[]] {
