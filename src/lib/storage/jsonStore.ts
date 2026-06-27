@@ -5,7 +5,7 @@ import type {
   UserFeedback, ScanRun
 } from './types'
 
-const DB_PATH = 'public/data/db'
+const DB_PATH = 'data/local-dev-db'
 
 function dbFile(collection: string): string {
   return `${DB_PATH}/${collection}.json`
@@ -50,6 +50,11 @@ export function createJsonStore(): Store {
       const items = await readCollection<Source>('sources')
       return items.find(s => s.id === id) ?? null
     },
+    async getSourceByDomain(domain: string) {
+      const normalized = domain.toLowerCase()
+      const items = await readCollection<Source>('sources')
+      return items.find(s => s.domain.toLowerCase() === normalized) ?? null
+    },
     async createSource(data) {
       const items = await readCollection<Source>('sources')
       const item: Source = { ...data, id: uuidv4(), createdAt: now(), updatedAt: now() }
@@ -90,6 +95,10 @@ export function createJsonStore(): Store {
     async getArticleByUrl(url) {
       const items = await readCollection<Article>('articles')
       return items.find(a => a.url === url || a.canonicalUrl === url) ?? null
+    },
+    async getArticleByDuplicateKey(key) {
+      const items = await readCollection<Article>('articles')
+      return items.find(a => a.duplicateKey === key) ?? null
     },
     async createArticle(data) {
       const items = await readCollection<Article>('articles')
@@ -159,6 +168,11 @@ export function createJsonStore(): Store {
     },
     async addBasketMember(data) {
       const items = await readCollection<BasketMember>('basket_members')
+      const existing = items.find(m => (
+        m.basketId === data.basketId &&
+        m.ticker.toUpperCase() === data.ticker.toUpperCase()
+      ))
+      if (existing) return existing
       const item: BasketMember = { ...data, id: uuidv4(), createdAt: now() }
       items.push(item)
       await writeCollection('basket_members', items)
@@ -181,7 +195,9 @@ export function createJsonStore(): Store {
     },
     async addWatchlistItem(data) {
       const items = await readCollection<WatchlistItem>('watchlist')
-      const item: WatchlistItem = { ...data, id: uuidv4(), createdAt: now() }
+      const existing = items.find(w => w.ticker.toUpperCase() === data.ticker.toUpperCase())
+      if (existing) return existing
+      const item: WatchlistItem = { ...data, ticker: data.ticker.toUpperCase(), id: uuidv4(), createdAt: now() }
       items.push(item)
       await writeCollection('watchlist', items)
       return item
@@ -231,19 +247,11 @@ export function createJsonStore(): Store {
       await writeCollection('scan_runs', items)
       return items[idx]
     },
-
-    async isSeeded() {
-      try {
-        const fs = await import('fs/promises')
-        await fs.access(dbFile('.seed'))
-        return true
-      } catch {
-        return false
-      }
-    },
-    async markSeeded() {
-      const fs = await import('fs/promises')
-      await fs.writeFile(dbFile('.seed'), now(), 'utf-8')
+    async getScanRuns(limit = 10) {
+      const items = await readCollection<ScanRun>('scan_runs')
+      return items
+        .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
+        .slice(0, limit)
     },
   }
   return store

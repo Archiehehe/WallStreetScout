@@ -1,119 +1,96 @@
 import { NextRequest } from 'next/server'
 import { getStore } from '@/lib/storage'
-import { extractFromArticle } from '@/lib/ingestion/extractor'
-import { parseArticleHtml } from '@/lib/ingestion/parser'
-import { fetchArticleHtml } from '@/lib/ingestion/fetcher'
-import { generateDuplicateKey } from '@/lib/ingestion/dedupe'
 import { DEFAULT_THRESHOLD } from '@/lib/ingestion/scorer'
+import { ArticleSubmitError, submitArticleUrl } from '@/lib/ingestion/submitArticle'
+import { errorResponse, handleApiError } from '@/lib/api/responses'
 
 export async function GET(request: NextRequest) {
-  const store = getStore()
-
-  const { searchParams } = request.nextUrl
-  const search = searchParams.get('search')?.toLowerCase()
-  const firm = searchParams.get('firm')
-  const sector = searchParams.get('sector')
-  const region = searchParams.get('region')
-
-  const articles = await store.getArticles({ minScore: DEFAULT_THRESHOLD })
-
-  const result = []
-  for (const article of articles) {
-    const extraction = await store.getExtraction(article.id)
-    const source = await store.getSource(article.sourceId)
-
-    if (firm && extraction?.firm !== firm) continue
-    if (sector && extraction?.sector !== sector) continue
-    if (region && extraction?.region !== region) continue
-    if (search) {
-      const match = article.title.toLowerCase().includes(search) ||
-        (extraction?.reasonShown?.toLowerCase().includes(search) ?? false)
-      if (!match) continue
-    }
-
-    result.push({
-      id: article.id,
-      title: article.title,
-      sourceName: source?.name ?? 'Unknown',
-      sourceType: extraction?.sourceType ?? source?.sourceType ?? 'unknown',
-      firm: extraction?.firm,
-      publishedAt: article.publishedAt,
-      theme: extraction?.theme,
-      sector: extraction?.sector,
-      region: extraction?.region,
-      tickers: extraction?.extractedTickers ?? [],
-      score: article.articleScore,
-      reasonShown: extraction?.reasonShown,
-    })
-  }
-
-  return Response.json(result)
-}
-
-export async function POST(request: NextRequest) {
-  const store = getStore()
-
   try {
-    const { url } = await request.json()
-    if (!url || typeof url !== 'string') {
-      return Response.json({ error: 'URL required' }, { status: 400 })
-    }
+    const store = getStore()
+    const { searchParams } = request.nextUrl
+    const search = searchParams.get('search')?.toLowerCase()
+    const firm = searchParams.get('firm')
+    const sector = searchParams.get('sector')
+    const region = searchParams.get('region')
+    const sourceType = searchParams.get('sourceType')
+    const saved = searchParams.get('saved')
+    const sort = searchParams.get('sort') ?? 'newest'
 
-    const existing = await store.getArticleByUrl(url)
-    if (existing) {
-      return Response.json({ error: 'Article already exists' }, { status: 409 })
-    }
+    const articles = await store.getArticles({ minScore: DEFAULT_THRESHOLD })
+    const baskets = await store.getBaskets()
+    const savedArticleIds = new Set(baskets.map((basket) => basket.articleId).filter(Boolean))
 
-    const html = await fetchArticleHtml(url)
-    const parsed = parseArticleHtml(html, url)
+    const result = []
+    for (const article of articles) {
+      const extraction = await store.getExtraction(article.id)
+      const source = await store.getSource(article.sourceId)
+      const articleSourceType = extraction?.sourceType ?? source?.sourceType ?? 'unknown'
+      const isSaved = savedArticleIds.has(article.id)
+      const tickers = extraction?.extractedTickers ?? []
 
-    const extraction = extractFromArticle(parsed.title, parsed.cleanedText, 'manual')
-    const totalScore = Object.values(extraction.scoreBreakdown).reduce((a, b) => a + b, 0)
+      if (firm && extraction?.firm !== firm) continue
+      if (sector && extraction?.sector !== sector) continue
+      if (region && extraction?.region !== region) continue
+      if (sourceType && articleSourceType !== sourceType) continue
+      if (saved === 'true' && !isSaved) continue
+      if (saved === 'false' && isSaved) continue
+      if (search) {
+        const haystack = [
+          article.title,
+          extraction?.reasonShown,
+          extraction?.firm,
+          extraction?.theme,
+          extraction?.sector,
+          extraction?.region,
+          ...tickers,
+        ].filter(Boolean).join(' ').toLowerCase()
+        if (!haystack.includes(search)) continue
+      }
 
-    if (totalScore < DEFAULT_THRESHOLD) {
-      return Response.json({
-        error: 'Article score too low',
-        score: totalScore,
-        breakdown: extraction.scoreBreakdown,
-      }, { status: 422 })
-    }
-
-    const dupKey = generateDuplicateKey(url, parsed.title)
-    const article = await store.createArticle({
-      sourceId: 'manual',
-      url,
-      canonicalUrl: parsed.canonicalUrl,
-      title: parsed.title,
-      author: parsed.author,
-      publishedAt: parsed.publishedAt || new Date().toISOString(),
-      fetchedAt: new Date().toISOString(),
-      rawText: html.slice(0, 50000),
-      cleanedText: parsed.cleanedText,
-      paywallStatus: parsed.paywallStatus,
-      duplicateKey: dupKey,
-      articleScore: totalScore,
-      status: 'saved',
-    })
-
-    await store.createExtraction({
-      articleId: article.id,
-      ...extraction,
-    })
-
-    for (const ticker of extraction.extractedTickers) {
-      await store.createIdea({
-        articleId: article.id,
-        ticker,
-        sector: extraction.sector,
-        theme: extraction.theme,
-        confidence: extraction.confidence,
-        isInWatchlist: false,
-        isInPortfolio: false,
+      result.push({
+        id: article.id,
+        title: article.title,
+        sourceName: source?.name ?? 'Unknown',
+        sourceType: articleSourceType,
+        firm: extraction?.firm,
+        publishedAt: article.publishedAt,
+        theme: extraction?.theme,
+        sector: extraction?.sector,
+        region: extraction?.region,
+        tickers,
+        score: article.articleScore,
+        reasonShown: extraction?.reasonShown,
+        saved: isSaved,
       })
     }
 
-    return Response.json({ id: article.id, score: totalScore }, { status: 201 })
-  } catch (err) {
-    return Response.json({ error: err instanceof Error ? err.message : 'Failed to process' }, { status: 500 })
+    result.sort((a, b) => {
+      if (sort === 'highest_score') return b.score - a.score
+      if (sort === 'most_tickers') return b.tickers.length - a.tickers.length
+      return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+    })
+
+    return Response.json(result)
+  } catch (error) {
+    return handleApiError(error)
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const { url } = await request.json()
+    if (!url || typeof url !== 'string') {
+      return errorResponse('URL required.', 400)
+    }
+
+    const result = await submitArticleUrl(url)
+    if (result.saved) return Response.json(result, { status: 201 })
+    if ('duplicate' in result && result.duplicate) return Response.json(result)
+    return Response.json(result, { status: 422 })
+  } catch (error) {
+    if (error instanceof ArticleSubmitError) {
+      return errorResponse(error.message, error.status, { code: error.code })
+    }
+    return handleApiError(error)
   }
 }

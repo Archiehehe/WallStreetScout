@@ -43,5 +43,6 @@ next-env.d.ts
 
 # raw data dumps
 /data/raw/
+/data/local-dev-db/
 /tmp/
 *.dump

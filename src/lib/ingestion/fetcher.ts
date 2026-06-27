@@ -1,4 +1,5 @@
 import type { Source } from '@/lib/storage/types'
+import { safeNormalizeUrl } from './url'
 
 interface FetchedUrl {
   url: string
@@ -60,8 +61,10 @@ export async function fetchRss(rssUrl: string, sourceId: string): Promise<Fetche
   }
 
   for (let i = 0; i < links.length; i++) {
+    const normalized = safeNormalizeUrl(links[i])
+    if (!normalized) continue
     urls.push({
-      url: links[i],
+      url: normalized,
       sourceId,
       title: titles[i + 1] || titles[i] || undefined,
       publishedAt: dates[i] || undefined,
@@ -81,7 +84,8 @@ export async function fetchSitemap(sitemapUrl: string, sourceId: string): Promis
   const locRegex = /<loc>(.*?)<\/loc>/gi
   let m
   while ((m = locRegex.exec(text)) !== null) {
-    urls.push({ url: m[1].trim(), sourceId })
+    const normalized = safeNormalizeUrl(m[1].trim())
+    if (normalized) urls.push({ url: normalized, sourceId })
   }
 
   return urls
@@ -91,5 +95,8 @@ export async function fetchArticleHtml(url: string): Promise<string> {
   const response = await fetch(url, {
     headers: { 'User-Agent': 'InstitutionalIdeaFeed/1.0' },
   })
+  if (!response.ok) {
+    throw new Error(`Fetch failed with HTTP ${response.status}`)
+  }
   return response.text()
 }

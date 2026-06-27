@@ -14,6 +14,22 @@ const PROVIDERS = [
   secapiProvider,
 ]
 
+export const METRICS_PROVIDER_ENV_VARS = [
+  'FMP_API_KEY',
+  'FINNHUB_API_KEY',
+  'TWELVE_DATA_API_KEY',
+  'ALPHA_VANTAGE_API_KEY',
+  'SECAPI_KEY',
+]
+
+export function getConfiguredMetricsProviderCount(): number {
+  return METRICS_PROVIDER_ENV_VARS.filter((name) => Boolean(process.env[name])).length
+}
+
+export function hasConfiguredMetricsProviders(): boolean {
+  return getConfiguredMetricsProviderCount() > 0
+}
+
 export async function runMetricsForTicker(ticker: string, forceRefresh = false): Promise<MergedMetrics | null> {
   if (!forceRefresh) {
     const cached = await getCachedMetrics(ticker, TTL.PRICE)

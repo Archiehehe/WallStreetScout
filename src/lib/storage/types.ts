@@ -147,6 +147,7 @@ export interface Store {
   // Sources
   getSources(): Promise<Source[]>
   getSource(id: string): Promise<Source | null>
+  getSourceByDomain(domain: string): Promise<Source | null>
   createSource(source: Omit<Source, 'id' | 'createdAt' | 'updatedAt'>): Promise<Source>
   updateSource(id: string, updates: Partial<Source>): Promise<Source | null>
   deleteSource(id: string): Promise<boolean>
@@ -155,6 +156,7 @@ export interface Store {
   getArticles(filters?: { minScore?: number; limit?: number; offset?: number }): Promise<Article[]>
   getArticle(id: string): Promise<Article | null>
   getArticleByUrl(url: string): Promise<Article | null>
+  getArticleByDuplicateKey(key: string): Promise<Article | null>
   createArticle(article: Omit<Article, 'id' | 'createdAt' | 'updatedAt'>): Promise<Article>
   updateArticle(id: string, updates: Partial<Article>): Promise<Article | null>
 
@@ -193,8 +195,5 @@ export interface Store {
   // Scan Runs
   createScanRun(run: Omit<ScanRun, 'id'>): Promise<ScanRun>
   updateScanRun(id: string, updates: Partial<ScanRun>): Promise<ScanRun | null>
-
-  // Seed
-  isSeeded(): Promise<boolean>
-  markSeeded(): Promise<void>
+  getScanRuns(limit?: number): Promise<ScanRun[]>
 }

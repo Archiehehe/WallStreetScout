@@ -1,10 +1,7 @@
 import { getStore } from '@/lib/storage'
 import { getEnabledSources } from './sources'
-import { fetchUrlsFromSource, fetchArticleHtml } from './fetcher'
-import { parseArticleHtml } from './parser'
-import { extractFromArticle } from './extractor'
-import { isAboveThreshold } from './scorer'
-import { generateDuplicateKey, isDuplicate } from './dedupe'
+import { fetchUrlsFromSource } from './fetcher'
+import { submitArticleUrl } from './submitArticle'
 
 export interface ScanResult {
   scanRunId: string
@@ -13,6 +10,7 @@ export interface ScanResult {
   articlesParsed: number
   articlesSaved: number
   errors: string[]
+  message?: string
 }
 
 export async function runScan(): Promise<ScanResult> {
@@ -28,102 +26,64 @@ export async function runScan(): Promise<ScanResult> {
     articlesSaved: 0,
   })
 
+  const sources = await getEnabledSources()
+  if (sources.length === 0) {
+    const finishedAt = new Date().toISOString()
+    await store.updateScanRun(scanRun.id, {
+      finishedAt,
+      status: 'completed',
+      sourcesChecked: 0,
+      urlsFound: 0,
+      articlesParsed: 0,
+      articlesSaved: 0,
+    })
+
+    return {
+      scanRunId: scanRun.id,
+      sourcesChecked: 0,
+      urlsFound: 0,
+      articlesParsed: 0,
+      articlesSaved: 0,
+      errors: [],
+      message: 'No enabled sources configured.',
+    }
+  }
+
   let totalUrls = 0
   let totalParsed = 0
   let totalSaved = 0
 
-  try {
-    const sources = await getEnabledSources()
+  for (const source of sources) {
+    try {
+      const urls = await fetchUrlsFromSource(source)
+      totalUrls += urls.length
 
-    for (const source of sources) {
-      try {
-        const urls = await fetchUrlsFromSource(source)
-        totalUrls += urls.length
+      for (const fetched of urls) {
+        try {
+          const result = await submitArticleUrl(fetched.url, {
+            source,
+            fetchedTitle: fetched.title,
+            fetchedPublishedAt: fetched.publishedAt,
+          })
 
-        for (const fetched of urls) {
-          try {
-            const dupKey = generateDuplicateKey(fetched.url, fetched.title || '')
-            if (await isDuplicate(dupKey)) continue
-
-            let html: string
-            try {
-              html = await fetchArticleHtml(fetched.url)
-            } catch {
-              continue
-            }
-
-            totalParsed++
-            const parsed = parseArticleHtml(html, fetched.url)
-            const extraction = extractFromArticle(
-              parsed.title,
-              parsed.cleanedText,
-              source.sourceType,
-            )
-            const totalScore = Object.values(extraction.scoreBreakdown).reduce((a, b) => a + b, 0)
-
-            if (!isAboveThreshold(totalScore)) continue
-
-            const article = await store.createArticle({
-              sourceId: source.id,
-              url: fetched.url,
-              canonicalUrl: parsed.canonicalUrl,
-              title: parsed.title,
-              author: parsed.author,
-              publishedAt: parsed.publishedAt || fetched.publishedAt || new Date().toISOString(),
-              fetchedAt: new Date().toISOString(),
-              rawText: html.slice(0, 50000),
-              cleanedText: parsed.cleanedText,
-              paywallStatus: parsed.paywallStatus,
-              duplicateKey: dupKey,
-              articleScore: totalScore,
-              status: 'saved',
-            })
-
-            await store.createExtraction({
-              articleId: article.id,
-              firm: extraction.firm,
-              sourceType: extraction.sourceType,
-              category: extraction.category,
-              theme: extraction.theme,
-              sector: extraction.sector,
-              region: extraction.region,
-              summary: parsed.cleanedText.slice(0, 500),
-              reasonShown: extraction.reasonShown,
-              extractedTickers: extraction.extractedTickers,
-              extractedCompanies: extraction.extractedCompanies,
-              scoreBreakdown: extraction.scoreBreakdown,
-              confidence: extraction.confidence,
-            })
-
-            for (const ticker of extraction.extractedTickers) {
-              await store.createIdea({
-                articleId: article.id,
-                ticker,
-                sector: extraction.sector,
-                theme: extraction.theme,
-                confidence: extraction.confidence,
-                isInWatchlist: false,
-                isInPortfolio: false,
-              })
-            }
-
-            totalSaved++
-          } catch (err) {
-            errors.push(`Error processing ${fetched.url}: ${err instanceof Error ? err.message : String(err)}`)
-          }
+          if ('duplicate' in result && result.duplicate) continue
+          totalParsed++
+          if (result.saved) totalSaved++
+        } catch (error) {
+          errors.push(
+            `Error processing ${fetched.url}: ${error instanceof Error ? error.message : String(error)}`,
+          )
         }
-      } catch (err) {
-        errors.push(`Error with source ${source.name}: ${err instanceof Error ? err.message : String(err)}`)
       }
+    } catch (error) {
+      errors.push(`Error with source ${source.name}: ${error instanceof Error ? error.message : String(error)}`)
     }
-  } catch (err) {
-    errors.push(`Scan error: ${err instanceof Error ? err.message : String(err)}`)
   }
 
   await store.updateScanRun(scanRun.id, {
     finishedAt: new Date().toISOString(),
     status: errors.length > 0 ? 'failed' : 'completed',
-    sourcesChecked: (await store.getSources()).length,
+    sourcesChecked: sources.length,
     urlsFound: totalUrls,
     articlesParsed: totalParsed,
     articlesSaved: totalSaved,
@@ -132,7 +92,7 @@ export async function runScan(): Promise<ScanResult> {
 
   return {
     scanRunId: scanRun.id,
-    sourcesChecked: (await store.getSources()).length,
+    sourcesChecked: sources.length,
     urlsFound: totalUrls,
     articlesParsed: totalParsed,
     articlesSaved: totalSaved,
