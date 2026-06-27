@@ -3,7 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { FirmBadge } from '@/components/FirmBadge'
-import { ThemeBadge, SectorBadge, RegionBadge } from '@/components/ThemeBadge'
+import { ThemeBadge, SectorBadge } from '@/components/ThemeBadge'
 import { TickerPill } from '@/components/TickerPill'
 import { TrendingUp, Eye, Download, Trash2 } from 'lucide-react'
 
@@ -13,7 +13,6 @@ interface BasketCardProps {
   firm?: string
   theme?: string
   sector?: string
-  region?: string
   tickers: string[]
   createdAt: string
   metricsStatus?: string
@@ -28,7 +27,6 @@ export function BasketCard({
   firm,
   theme,
   sector,
-  region,
   tickers,
   createdAt,
   onRunMetrics,
@@ -50,7 +48,6 @@ export function BasketCard({
               {firm && <FirmBadge firm={firm} />}
               {theme && <ThemeBadge theme={theme} />}
               {sector && <SectorBadge sector={sector} />}
-              {region && <RegionBadge region={region} />}
             </div>
           </div>
         </div>

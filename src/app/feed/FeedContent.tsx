@@ -12,13 +12,13 @@ import { getSnapJudgementUrl } from '@/lib/integrations/snapJudgement'
 interface ArticleData {
   id: string
   title: string
+  url?: string
   sourceName: string
   sourceType: string
   firm?: string
   publishedAt: string
   theme?: string
   sector?: string
-  region?: string
   tickers: string[]
   score: number
   reasonShown?: string
@@ -31,7 +31,6 @@ export function FeedPage() {
   const [search, setSearch] = useState('')
   const [firmFilter, setFirmFilter] = useState('')
   const [sectorFilter, setSectorFilter] = useState('')
-  const [regionFilter, setRegionFilter] = useState('')
   const router = useRouter()
 
   const fetchArticles = useCallback(async () => {
@@ -41,7 +40,6 @@ export function FeedPage() {
       if (search) params.set('search', search)
       if (firmFilter) params.set('firm', firmFilter)
       if (sectorFilter) params.set('sector', sectorFilter)
-      if (regionFilter) params.set('region', regionFilter)
 
       const res = await fetch(`/api/articles?${params}`)
       if (!res.ok) throw new Error('Failed to fetch')
@@ -52,14 +50,13 @@ export function FeedPage() {
     } finally {
       setLoading(false)
     }
-  }, [search, firmFilter, sectorFilter, regionFilter])
+  }, [search, firmFilter, sectorFilter])
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchArticles() }, [fetchArticles])
 
   const uniqueFirms = [...new Set(articles.map(a => a.firm).filter(Boolean) as string[])]
   const uniqueSectors = [...new Set(articles.map(a => a.sector).filter(Boolean) as string[])]
-  const uniqueRegions = [...new Set(articles.map(a => a.region).filter(Boolean) as string[])]
 
   const handleFeedback = async (articleId: string, action: string) => {
     await fetch('/api/feedback', {
@@ -84,7 +81,6 @@ export function FeedPage() {
         firm: article.firm,
         theme: article.theme,
         sector: article.sector,
-        region: article.region,
         tickers: article.tickers,
       }),
     })
@@ -101,14 +97,11 @@ export function FeedPage() {
       <FilterBar
         firms={uniqueFirms}
         sectors={uniqueSectors}
-        regions={uniqueRegions}
         selectedFirm={firmFilter}
         selectedSector={sectorFilter}
-        selectedRegion={regionFilter}
         searchQuery={search}
         onFirmChange={setFirmFilter}
         onSectorChange={setSectorFilter}
-        onRegionChange={setRegionFilter}
         onSearchChange={setSearch}
       />
 
@@ -127,13 +120,13 @@ export function FeedPage() {
               key={a.id}
               id={a.id}
               title={a.title}
+              url={a.url}
               source={a.sourceName}
               firm={a.firm}
               sourceType={a.sourceType}
               publishedAt={a.publishedAt}
               theme={a.theme}
               sector={a.sector}
-              region={a.region}
               tickers={a.tickers}
               score={a.score}
               reasonShown={a.reasonShown}

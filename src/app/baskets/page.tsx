@@ -13,7 +13,6 @@ interface BasketData {
   firm?: string
   theme?: string
   sector?: string
-  region?: string
   tickers: string[]
   createdAt: string
 }
@@ -93,7 +92,6 @@ export default function BasketsPage() {
               firm={b.firm}
               theme={b.theme}
               sector={b.sector}
-              region={b.region}
               tickers={b.tickers}
               createdAt={b.createdAt}
               onRunMetrics={() => handleRunMetrics(b)}

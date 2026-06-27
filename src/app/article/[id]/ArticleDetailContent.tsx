@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { FirmBadge } from '@/components/FirmBadge'
-import { ThemeBadge, SectorBadge, RegionBadge, SourceTypeBadge } from '@/components/ThemeBadge'
+import { ThemeBadge, SectorBadge, SourceTypeBadge } from '@/components/ThemeBadge'
 import { ScoreBadge } from '@/components/ScoreBadge'
 import { ScoreBreakdown } from '@/components/ScoreBreakdown'
 import { MetricTable } from '@/components/MetricTable'
@@ -35,7 +35,6 @@ interface ArticleData {
     category?: string
     theme?: string
     sector?: string
-    region?: string
     summary?: string
     reasonShown?: string
     extractedTickers: string[]
@@ -94,7 +93,6 @@ export function ArticleDetailPage({ id }: { id: string }) {
                 {extraction.sourceType && <SourceTypeBadge type={extraction.sourceType} />}
                 {extraction.theme && <ThemeBadge theme={extraction.theme} />}
                 {extraction.sector && <SectorBadge sector={extraction.sector} />}
-                {extraction.region && <RegionBadge region={extraction.region} />}
                 <ScoreBadge score={article.articleScore} />
               </div>
             </div>

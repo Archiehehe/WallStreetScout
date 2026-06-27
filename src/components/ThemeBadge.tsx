@@ -16,14 +16,6 @@ export function SectorBadge({ sector }: { sector: string }) {
   )
 }
 
-export function RegionBadge({ region }: { region: string }) {
-  return (
-    <Badge variant="outline" className="text-[11px] border-blue-800 text-blue-400 font-medium px-1.5 py-0.5">
-      {region}
-    </Badge>
-  )
-}
-
 export function SourceTypeBadge({ type }: { type: string }) {
   const colorMap: Record<string, string> = {
     primary: 'bg-emerald-950/50 text-emerald-400 border-emerald-800',

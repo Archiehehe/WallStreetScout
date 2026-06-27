@@ -11,7 +11,6 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')?.toLowerCase()
     const firm = searchParams.get('firm')
     const sector = searchParams.get('sector')
-    const region = searchParams.get('region')
     const sourceType = searchParams.get('sourceType')
     const saved = searchParams.get('saved')
     const sort = searchParams.get('sort') ?? 'newest'
@@ -30,7 +29,6 @@ export async function GET(request: NextRequest) {
 
       if (firm && extraction?.firm !== firm) continue
       if (sector && extraction?.sector !== sector) continue
-      if (region && extraction?.region !== region) continue
       if (sourceType && articleSourceType !== sourceType) continue
       if (saved === 'true' && !isSaved) continue
       if (saved === 'false' && isSaved) continue
@@ -50,6 +48,7 @@ export async function GET(request: NextRequest) {
       result.push({
         id: article.id,
         title: article.title,
+        url: article.url,
         sourceName: source?.name ?? 'Unknown',
         sourceType: articleSourceType,
         firm: extraction?.firm,

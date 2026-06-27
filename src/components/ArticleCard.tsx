@@ -3,21 +3,21 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { FirmBadge } from '@/components/FirmBadge'
-import { ThemeBadge, SectorBadge, RegionBadge, SourceTypeBadge } from '@/components/ThemeBadge'
+import { ThemeBadge, SectorBadge, SourceTypeBadge } from '@/components/ThemeBadge'
 import { ScoreBadge } from '@/components/ScoreBadge'
 import { TickerPill } from '@/components/TickerPill'
-import { Eye, Plus, TrendingUp, BarChart3, ThumbsUp, ThumbsDown, EyeOff, Zap } from 'lucide-react'
+import { Eye, Plus, TrendingUp, ExternalLink, ThumbsUp, ThumbsDown, EyeOff, Zap } from 'lucide-react'
 
 interface ArticleCardProps {
   id: string
   title: string
+  url?: string
   source: string
   firm?: string
   sourceType: string
   publishedAt: string
   theme?: string
   sector?: string
-  region?: string
   tickers: string[]
   score: number
   reasonShown?: string
@@ -33,13 +33,13 @@ interface ArticleCardProps {
 export function ArticleCard({
   id,
   title,
+  url,
   source,
   firm,
   sourceType,
   publishedAt,
   theme,
   sector,
-  region,
   tickers,
   score,
   reasonShown,
@@ -85,7 +85,6 @@ export function ArticleCard({
           <SourceTypeBadge type={sourceType} />
           {theme && <ThemeBadge theme={theme} />}
           {sector && <SectorBadge sector={sector} />}
-          {region && <RegionBadge region={region} />}
         </div>
 
         {tickers.length > 0 && (
@@ -124,11 +123,13 @@ export function ArticleCard({
           <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-[#9CA3AF] hover:text-[#3B82F6] hover:bg-[#1A1A1A]" onClick={onHideSource}>
             <EyeOff className="h-3 w-3" />
           </Button>
-          <a href={`/article/${id}`} className="ml-auto">
-            <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-[#9CA3AF] hover:text-[#3B82F6] hover:bg-[#1A1A1A]">
-              <BarChart3 className="h-3 w-3" />
-            </Button>
-          </a>
+          {url && (
+            <a href={url} target="_blank" rel="noopener noreferrer" className="ml-auto">
+              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 text-[#9CA3AF] hover:text-[#3B82F6] hover:bg-[#1A1A1A]">
+                <ExternalLink className="h-3 w-3" /> Open original
+              </Button>
+            </a>
+          )}
         </div>
       </CardContent>
     </Card>

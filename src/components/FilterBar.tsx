@@ -7,16 +7,13 @@ import { Search } from 'lucide-react'
 interface FilterBarProps {
   firms?: string[]
   sectors?: string[]
-  regions?: string[]
   themes?: string[]
   selectedFirm?: string
   selectedSector?: string
-  selectedRegion?: string
   selectedTheme?: string
   searchQuery?: string
   onFirmChange?: (v: string) => void
   onSectorChange?: (v: string) => void
-  onRegionChange?: (v: string) => void
   onThemeChange?: (v: string) => void
   onSearchChange?: (v: string) => void
   showScoreFilter?: boolean
@@ -25,10 +22,10 @@ interface FilterBarProps {
 }
 
 export function FilterBar({
-  firms = [], sectors = [], regions = [], themes = [],
-  selectedFirm, selectedSector, selectedRegion, selectedTheme,
+  firms = [], sectors = [], themes = [],
+  selectedFirm, selectedSector, selectedTheme,
   searchQuery = '',
-  onFirmChange, onSectorChange, onRegionChange, onThemeChange, onSearchChange,
+  onFirmChange, onSectorChange, onThemeChange, onSearchChange,
 }: FilterBarProps) {
   return (
     <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -60,17 +57,6 @@ export function FilterBar({
           <SelectContent>
             <SelectItem value="all">All sectors</SelectItem>
             {sectors.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      )}
-      {regions.length > 0 && (
-        <Select value={selectedRegion || 'all'} onValueChange={(v) => onRegionChange?.(v === 'all' ? '' : v ?? '')}>
-          <SelectTrigger className="h-9 text-xs w-[130px] border-[#1F1F1F] bg-[#0A0A0A] text-[#9CA3AF]">
-            <SelectValue placeholder="All regions" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All regions</SelectItem>
-            {regions.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
           </SelectContent>
         </Select>
       )}
