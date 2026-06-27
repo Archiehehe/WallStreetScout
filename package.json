@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "db:migrate": "node scripts/db-migrate.mjs",
+    "db:sync:sources": "node scripts/db-sync-sources.mjs",
+    "db:reset": "node scripts/db-reset.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

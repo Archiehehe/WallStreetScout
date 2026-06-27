@@ -1,12 +1,13 @@
 import { neon } from '@neondatabase/serverless'
 import type { BasketMember, Store, WatchlistItem } from './types'
+import { getDatabaseUrl } from './env'
 
 type Row = Record<string, unknown>
 
 function getClient() {
-  const databaseUrl = process.env.DATABASE_URL
+  const databaseUrl = getDatabaseUrl()
   if (!databaseUrl) {
-    throw new Error('DATABASE_URL must be set')
+    throw new Error('DATABASE_URL must be set. STORAGE_URL is only used as a fallback.')
   }
 
   return neon(databaseUrl)

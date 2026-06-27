@@ -1,6 +1,7 @@
 import type { Store } from './types'
 import { createJsonStore } from './jsonStore'
 import { createNeonStore } from './neonStore'
+import { getDatabaseUrl } from './env'
 
 let store: Store | null = null
 let storeMode: StorageMode | null = null
@@ -15,7 +16,7 @@ export class StorageConfigurationError extends Error {
 }
 
 export function isNeonConfigured(): boolean {
-  return Boolean(process.env.DATABASE_URL)
+  return Boolean(getDatabaseUrl())
 }
 
 export function getStorageMode(): StorageMode {
@@ -36,7 +37,7 @@ export function getStore(): Store {
   } else {
     throw new StorageConfigurationError(
       'Neon not configured. Set the DATABASE_URL environment variable. ' +
-      'JSON file store is only available in development mode.'
+      'STORAGE_URL is only used as a fallback. JSON file store is only available in development mode.'
     )
   }
 

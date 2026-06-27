@@ -18,6 +18,8 @@ create table if not exists sources (
   updated_at timestamptz not null default now()
 );
 
+alter table sources alter column id set default gen_random_uuid();
+
 create unique index if not exists idx_sources_domain_unique on sources (lower(domain));
 
 alter table sources alter column source_type set default 'primary';
@@ -55,6 +57,8 @@ create table if not exists articles (
   updated_at timestamptz not null default now()
 );
 
+alter table articles alter column id set default gen_random_uuid();
+
 create unique index if not exists idx_articles_url_unique on articles (lower(url));
 create unique index if not exists idx_articles_canonical_url_unique on articles (lower(canonical_url)) where canonical_url is not null;
 create unique index if not exists idx_articles_duplicate_key_unique on articles (duplicate_key) where duplicate_key is not null;
@@ -81,6 +85,8 @@ create table if not exists article_extractions (
   created_at timestamptz not null default now()
 );
 
+alter table article_extractions alter column id set default gen_random_uuid();
+
 create unique index if not exists idx_article_extractions_article_unique on article_extractions(article_id);
 create index if not exists idx_article_extractions_firm on article_extractions(firm);
 create index if not exists idx_article_extractions_theme on article_extractions(theme);
@@ -102,6 +108,8 @@ create table if not exists ideas (
   created_at timestamptz not null default now()
 );
 
+alter table ideas alter column id set default gen_random_uuid();
+
 create index if not exists idx_ideas_ticker on ideas(ticker);
 create index if not exists idx_ideas_article on ideas(article_id);
 create unique index if not exists idx_ideas_article_ticker_unique on ideas(article_id, ticker);
@@ -118,6 +126,8 @@ create table if not exists baskets (
   created_at timestamptz not null default now()
 );
 
+alter table baskets alter column id set default gen_random_uuid();
+
 create index if not exists idx_baskets_created_at on baskets(created_at desc);
 
 create table if not exists basket_members (
@@ -129,6 +139,8 @@ create table if not exists basket_members (
   country text,
   created_at timestamptz not null default now()
 );
+
+alter table basket_members alter column id set default gen_random_uuid();
 
 create index if not exists idx_basket_members_basket on basket_members(basket_id);
 create unique index if not exists idx_basket_members_basket_ticker_unique on basket_members(basket_id, ticker);
@@ -146,6 +158,8 @@ create table if not exists watchlist (
   notes text,
   created_at timestamptz not null default now()
 );
+
+alter table watchlist alter column id set default gen_random_uuid();
 
 create unique index if not exists idx_watchlist_ticker_unique on watchlist(ticker);
 
@@ -171,6 +185,8 @@ create table if not exists metrics_snapshots (
   created_at timestamptz not null default now()
 );
 
+alter table metrics_snapshots alter column id set default gen_random_uuid();
+
 create index if not exists idx_metrics_snapshots_ticker on metrics_snapshots(ticker);
 create index if not exists idx_metrics_date on metrics_snapshots(snapshot_date desc);
 
@@ -181,6 +197,8 @@ create table if not exists user_feedback (
   notes text,
   created_at timestamptz not null default now()
 );
+
+alter table user_feedback alter column id set default gen_random_uuid();
 
 create table if not exists scan_runs (
   id uuid primary key default gen_random_uuid(),
@@ -193,5 +211,7 @@ create table if not exists scan_runs (
   articles_saved integer not null default 0,
   errors_json jsonb
 );
+
+alter table scan_runs alter column id set default gen_random_uuid();
 
 create index if not exists idx_scan_runs_started_at on scan_runs(started_at desc);
