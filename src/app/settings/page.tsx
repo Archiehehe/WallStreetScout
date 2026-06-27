@@ -3,9 +3,11 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { ProviderStatus } from '@/components/ProviderStatus'
 import { LoadingState } from '@/components/LoadingState'
-
+import { Loader2, ExternalLink, Play } from 'lucide-react'
 
 const PROVIDER_VARS = [
   { name: 'FMP API', envVar: 'FMP_API_KEY' },
@@ -20,12 +22,24 @@ const PROVIDER_VARS = [
   { name: 'API Ninjas', envVar: 'API_NINJAS_KEY' },
   { name: 'Earnings API', envVar: 'EARNINGS_API_KEY' },
   { name: 'Supabase URL', envVar: 'SUPABASE_URL' },
+  { name: 'Cron Secret', envVar: 'CRON_SECRET' },
+  { name: 'SnapJudgement', envVar: 'NEXT_PUBLIC_SNAPJUDGEMENT_URL' },
 ]
 
 export default function SettingsPage() {
   const [providerStatus, setProviderStatus] = useState<Record<string, boolean>>({})
   const [loading, setLoading] = useState(true)
   const [sourceCount, setSourceCount] = useState(0)
+
+  // Scan state
+  const [scanning, setScanning] = useState(false)
+  const [scanResult, setScanResult] = useState<string | null>(null)
+
+  // Submit URL state
+  const [submitUrl, setSubmitUrl] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [submitMessage, setSubmitMessage] = useState('')
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'done' | 'error'>('idle')
 
   useEffect(() => {
     const load = async () => {
@@ -52,6 +66,57 @@ export default function SettingsPage() {
     load()
   }, [])
 
+  const handleRunScan = async () => {
+    setScanning(true)
+    setScanResult(null)
+    try {
+      const res = await fetch('/api/scan/trigger', { method: 'POST' })
+      const data = await res.json()
+      const msg = data.scanRunId
+        ? `Scan complete: ${data.urlsFound ?? 0} URLs found, ${data.articlesParsed ?? 0} parsed, ${data.articlesSaved ?? 0} saved`
+        : `Response: ${JSON.stringify(data).slice(0, 200)}`
+      setScanResult(msg)
+    } catch {
+      setScanResult('Scan failed — check server logs.')
+    } finally {
+      setScanning(false)
+    }
+  }
+
+  const handleSubmitUrl = async () => {
+    if (!submitUrl.trim()) return
+    setSubmitting(true)
+    setSubmitMessage('')
+    setSubmitStatus('idle')
+    try {
+      const res = await fetch('/api/articles/submit-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: submitUrl }),
+      })
+      const data = await res.json()
+      if (res.status === 201) {
+        setSubmitStatus('done')
+        setSubmitMessage(`Saved! Score: ${data.score}`)
+        setSubmitUrl('')
+      } else if (res.status === 409) {
+        setSubmitStatus('error')
+        setSubmitMessage('Article already exists (duplicate).')
+      } else if (res.status === 422) {
+        setSubmitStatus('error')
+        setSubmitMessage(`Score ${data.score} below threshold.`)
+      } else {
+        setSubmitStatus('error')
+        setSubmitMessage(data.error || 'Failed to submit.')
+      }
+    } catch {
+      setSubmitStatus('error')
+      setSubmitMessage('Network error.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   if (loading) return <LoadingState />
 
   const configuredCount = Object.values(providerStatus).filter(Boolean).length
@@ -74,14 +139,14 @@ export default function SettingsPage() {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-xs">CRON_SECRET set</span>
-            <Badge variant={providerStatus['CRON_SECRET'] ? 'outline' : 'destructive'} className="text-xs">
-              {providerStatus['CRON_SECRET'] ? 'Configured' : 'Not set'}
+            <Badge variant={providerStatus['Cron Secret'] ? 'outline' : 'destructive'} className="text-xs">
+              {providerStatus['Cron Secret'] ? 'Configured' : 'Not set'}
             </Badge>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-xs">Finance APIs configured</span>
             <Badge variant="outline" className="text-xs">
-              {configuredCount - (isSupabase ? 1 : 0)} / {PROVIDER_VARS.length - 1}
+              {configuredCount - (isSupabase ? 1 : 0) - (providerStatus['Cron Secret'] ? 1 : 0) - (providerStatus['SnapJudgement'] ? 1 : 0)} / {PROVIDER_VARS.length - 3}
             </Badge>
           </div>
           <div className="flex items-center justify-between">
@@ -98,8 +163,8 @@ export default function SettingsPage() {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-xs">SnapJudgement integration</span>
-            <Badge variant={process.env.NEXT_PUBLIC_SNAPJUDGEMENT_URL ? 'outline' : 'destructive'} className="text-xs">
-              {process.env.NEXT_PUBLIC_SNAPJUDGEMENT_URL ? 'Configured' : 'Not configured'}
+            <Badge variant={providerStatus['SnapJudgement'] ? 'outline' : 'destructive'} className="text-xs">
+              {providerStatus['SnapJudgement'] ? 'Configured' : 'Not configured'}
             </Badge>
           </div>
         </CardContent>
@@ -115,6 +180,59 @@ export default function SettingsPage() {
               <ProviderStatus key={p.name} name={p.name} configured={providerStatus[p.name] || false} />
             ))}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Scan & Ingest</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Trigger a full scan across all enabled sources. A scheduled scan also runs daily via GitHub Actions.
+          </p>
+          <div className="flex items-center gap-3">
+            <Button size="sm" onClick={handleRunScan} disabled={scanning}>
+              {scanning ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
+              {scanning ? 'Scanning...' : 'Run Scan Now'}
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              Last scan: <span className="font-mono">—</span>
+            </span>
+          </div>
+          {scanResult && (
+            <p className={`text-xs ${scanResult.includes('failed') ? 'text-red-500' : 'text-green-600'}`}>
+              {scanResult}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Submit Article URL</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-xs text-muted-foreground mb-2">
+            Manually submit a research article URL for parsing and scoring.
+          </p>
+          <div className="flex gap-2">
+            <Input
+              placeholder="https://..."
+              value={submitUrl}
+              onChange={(e) => setSubmitUrl(e.target.value)}
+              className="text-xs"
+            />
+            <Button size="sm" onClick={handleSubmitUrl} disabled={submitting}>
+              {submitting ? <Loader2 className="h-3 w-3 animate-spin" /> : <ExternalLink className="h-3 w-3" />}
+              Submit
+            </Button>
+          </div>
+          {submitMessage && (
+            <p className={`text-xs mt-1 ${submitStatus === 'done' ? 'text-green-600' : 'text-red-500'}`}>
+              {submitMessage}
+            </p>
+          )}
         </CardContent>
       </Card>
 
