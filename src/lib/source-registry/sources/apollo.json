@@ -1,0 +1,16 @@
+{
+  "id": "apollo",
+  "name": "Apollo",
+  "domain": "apollo.com",
+  "sourceType": "primary",
+  "sourceClass": "primary_institutional",
+  "enabled": true,
+  "defaultEnabled": true,
+  "strictEvidenceRequired": true,
+  "allowTickerlessThemePieces": false,
+  "category": "alternatives",
+  "parserType": "generic",
+  "qualityScore": 9,
+  "sitemapUrl": "https://apollo.com/sitemap.xml",
+  "accessNote": "Default-enabled high-signal institutional source."
+}

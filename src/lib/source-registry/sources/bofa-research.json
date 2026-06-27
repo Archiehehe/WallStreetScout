@@ -1,0 +1,16 @@
+{
+  "id": "bofa-research",
+  "name": "BofA Research",
+  "domain": "bofa.com",
+  "sourceType": "primary",
+  "sourceClass": "primary_institutional",
+  "enabled": true,
+  "defaultEnabled": true,
+  "strictEvidenceRequired": true,
+  "allowTickerlessThemePieces": false,
+  "category": "bank_research",
+  "parserType": "generic",
+  "qualityScore": 9,
+  "sitemapUrl": "https://bofa.com/sitemap.xml",
+  "accessNote": "Default-enabled high-signal institutional source."
+}

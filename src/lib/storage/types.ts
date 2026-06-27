@@ -3,10 +3,16 @@ export interface Source {
   name: string
   domain: string
   sourceType: 'primary'
+  sourceClass?: 'primary_institutional' | 'public_institutional_research' | 'manual'
   rssUrl?: string
   sitemapUrl?: string
   parserType?: string
   enabled: boolean
+  defaultEnabled?: boolean
+  strictEvidenceRequired?: boolean
+  allowTickerlessThemePieces?: boolean
+  category?: string
+  accessNote?: string
   qualityScore: number
   notes?: string
   createdAt: string

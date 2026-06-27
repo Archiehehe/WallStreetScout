@@ -1,0 +1,16 @@
+{
+  "id": "goldman-sachs-insights",
+  "name": "Goldman Sachs Insights",
+  "domain": "goldmansachs.com",
+  "sourceType": "primary",
+  "sourceClass": "primary_institutional",
+  "enabled": true,
+  "defaultEnabled": true,
+  "strictEvidenceRequired": true,
+  "allowTickerlessThemePieces": false,
+  "category": "bank_research",
+  "parserType": "generic",
+  "qualityScore": 9,
+  "sitemapUrl": "https://goldmansachs.com/sitemap.xml",
+  "accessNote": "Default-enabled high-signal institutional source."
+}

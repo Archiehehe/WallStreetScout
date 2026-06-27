@@ -1,0 +1,16 @@
+{
+  "id": "lseg-research",
+  "name": "LSEG Research",
+  "domain": "lseg.com",
+  "sourceType": "primary",
+  "sourceClass": "public_institutional_research",
+  "enabled": false,
+  "defaultEnabled": false,
+  "strictEvidenceRequired": true,
+  "allowTickerlessThemePieces": true,
+  "category": "market_structure",
+  "parserType": "generic",
+  "qualityScore": 7,
+  "sitemapUrl": "https://lseg.com/sitemap.xml",
+  "accessNote": "Available in the canonical registry but disabled by default; enable when you want this source scanned."
+}

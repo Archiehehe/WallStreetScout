@@ -1,0 +1,16 @@
+{
+  "id": "san-francisco-fed-research",
+  "name": "San Francisco Fed Research",
+  "domain": "frbsf.org",
+  "sourceType": "primary",
+  "sourceClass": "public_institutional_research",
+  "enabled": false,
+  "defaultEnabled": false,
+  "strictEvidenceRequired": true,
+  "allowTickerlessThemePieces": true,
+  "category": "public_research",
+  "parserType": "generic",
+  "qualityScore": 7,
+  "sitemapUrl": "https://frbsf.org/sitemap.xml",
+  "accessNote": "Available in the canonical registry but disabled by default; enable when you want this source scanned."
+}

@@ -1,0 +1,16 @@
+{
+  "id": "bnp-paribas-cib-markets-360",
+  "name": "BNP Paribas CIB Markets 360",
+  "domain": "cib.bnpparibas",
+  "sourceType": "primary",
+  "sourceClass": "primary_institutional",
+  "enabled": false,
+  "defaultEnabled": false,
+  "strictEvidenceRequired": true,
+  "allowTickerlessThemePieces": false,
+  "category": "bank_research",
+  "parserType": "generic",
+  "qualityScore": 7,
+  "sitemapUrl": "https://cib.bnpparibas/sitemap.xml",
+  "accessNote": "Available in the canonical registry but disabled by default; enable when you want this source scanned."
+}

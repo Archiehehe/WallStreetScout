@@ -8,6 +8,9 @@ interface FetchedUrl {
   title?: string
 }
 
+const DEFAULT_MAX_URLS_PER_SOURCE = 12
+const RESEARCH_URL_PATTERN = /insight|research|commentary|market|outlook|view|perspective|article|publication|memo|letter|strategy|investment|portfolio|econom|thought|analysis/i
+
 export async function fetchUrlsFromSource(source: Source): Promise<FetchedUrl[]> {
   const urls: FetchedUrl[] = []
 
@@ -29,23 +32,31 @@ export async function fetchUrlsFromSource(source: Source): Promise<FetchedUrl[]>
     }
   }
 
-  return urls
+  return prioritizeFetchedUrls(urls)
 }
 
 export async function fetchRss(rssUrl: string, sourceId: string): Promise<FetchedUrl[]> {
   const response = await fetch(rssUrl, {
     headers: { 'User-Agent': 'InstitutionalIdeaFeed/1.0' },
   })
+  if (!response.ok) {
+    throw new Error(`RSS fetch failed with HTTP ${response.status}`)
+  }
   const text = await response.text()
 
   const urls: FetchedUrl[] = []
   const linkRegex = /<link[^>]*>(.*?)<\/link>/gi
+  const atomLinkRegex = /<link[^>]+href=["']([^"']+)["'][^>]*>/gi
   const titleRegex = /<title[^>]*>(.*?)<\/title>/gi
   const pubDateRegex = /<pubDate[^>]*>(.*?)<\/pubDate>/gi
 
   const links: string[] = []
   let m
   while ((m = linkRegex.exec(text)) !== null) {
+    const link = m[1].trim()
+    if (link.startsWith('http')) links.push(link)
+  }
+  while ((m = atomLinkRegex.exec(text)) !== null) {
     const link = m[1].trim()
     if (link.startsWith('http')) links.push(link)
   }
@@ -78,6 +89,9 @@ export async function fetchSitemap(sitemapUrl: string, sourceId: string): Promis
   const response = await fetch(sitemapUrl, {
     headers: { 'User-Agent': 'InstitutionalIdeaFeed/1.0' },
   })
+  if (!response.ok) {
+    throw new Error(`Sitemap fetch failed with HTTP ${response.status}`)
+  }
   const text = await response.text()
 
   const urls: FetchedUrl[] = []
@@ -89,6 +103,23 @@ export async function fetchSitemap(sitemapUrl: string, sourceId: string): Promis
   }
 
   return urls
+}
+
+function prioritizeFetchedUrls(urls: FetchedUrl[]): FetchedUrl[] {
+  const maxUrls = Number(process.env.SCAN_MAX_URLS_PER_SOURCE ?? DEFAULT_MAX_URLS_PER_SOURCE)
+  const byUrl = new Map<string, FetchedUrl>()
+
+  for (const item of urls) {
+    if (!byUrl.has(item.url)) {
+      byUrl.set(item.url, item)
+    }
+  }
+
+  const uniqueUrls = Array.from(byUrl.values())
+  const researchUrls = uniqueUrls.filter((item) => RESEARCH_URL_PATTERN.test(item.url) || RESEARCH_URL_PATTERN.test(item.title ?? ''))
+  const prioritized = researchUrls.length > 0 ? researchUrls : uniqueUrls
+
+  return prioritized.slice(0, Math.max(1, maxUrls))
 }
 
 export async function fetchArticleHtml(url: string): Promise<string> {

@@ -8,10 +8,16 @@ create table if not exists sources (
   name text not null,
   domain text not null,
   source_type text not null default 'primary',
+  source_class text not null default 'primary_institutional',
   rss_url text,
   sitemap_url text,
   parser_type text,
   enabled boolean not null default true,
+  default_enabled boolean not null default false,
+  strict_evidence_required boolean not null default true,
+  allow_tickerless_theme_pieces boolean not null default false,
+  category text,
+  access_note text,
   quality_score integer not null default 5,
   notes text,
   created_at timestamptz not null default now(),
@@ -19,6 +25,12 @@ create table if not exists sources (
 );
 
 alter table sources alter column id set default gen_random_uuid();
+alter table sources add column if not exists source_class text not null default 'primary_institutional';
+alter table sources add column if not exists default_enabled boolean not null default false;
+alter table sources add column if not exists strict_evidence_required boolean not null default true;
+alter table sources add column if not exists allow_tickerless_theme_pieces boolean not null default false;
+alter table sources add column if not exists category text;
+alter table sources add column if not exists access_note text;
 
 create unique index if not exists idx_sources_domain_unique on sources (lower(domain));
 

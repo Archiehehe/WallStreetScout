@@ -31,6 +31,7 @@ export function FeedPage() {
   const [search, setSearch] = useState('')
   const [firmFilter, setFirmFilter] = useState('')
   const [sectorFilter, setSectorFilter] = useState('')
+  const [scanning, setScanning] = useState(false)
   const router = useRouter()
 
   const fetchArticles = useCallback(async () => {
@@ -87,6 +88,16 @@ export function FeedPage() {
     handleFeedback(article.id, 'save_basket')
   }
 
+  const handleRunScan = async () => {
+    setScanning(true)
+    try {
+      await fetch('/api/scan/trigger', { method: 'POST' })
+      await fetchArticles()
+    } finally {
+      setScanning(false)
+    }
+  }
+
   if (error) return <ErrorState message={error} />
   if (loading) return <LoadingState />
 
@@ -108,8 +119,9 @@ export function FeedPage() {
       {articles.length === 0 ? (
         <EmptyState
           title="No institutional ideas yet"
-          description="Add a source to start building your feed. Articles are fetched automatically via API and parsers."
+          description="Run a scan across enabled institutional sources, or review the source catalog."
           actions={[
+            { label: scanning ? 'Scanning...' : 'Run Scan', onClick: handleRunScan },
             { label: 'Go to Sources', onClick: () => router.push('/sources') },
           ]}
         />

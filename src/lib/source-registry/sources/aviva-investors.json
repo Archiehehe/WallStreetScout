@@ -1,0 +1,16 @@
+{
+  "id": "aviva-investors",
+  "name": "Aviva Investors",
+  "domain": "avivainvestors.com",
+  "sourceType": "primary",
+  "sourceClass": "primary_institutional",
+  "enabled": false,
+  "defaultEnabled": false,
+  "strictEvidenceRequired": true,
+  "allowTickerlessThemePieces": false,
+  "category": "asset_manager",
+  "parserType": "generic",
+  "qualityScore": 7,
+  "sitemapUrl": "https://avivainvestors.com/sitemap.xml",
+  "accessNote": "Available in the canonical registry but disabled by default; enable when you want this source scanned."
+}

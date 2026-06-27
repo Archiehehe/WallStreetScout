@@ -1,0 +1,16 @@
+{
+  "id": "point72-perspectives",
+  "name": "Point72 Perspectives",
+  "domain": "point72.com",
+  "sourceType": "primary",
+  "sourceClass": "primary_institutional",
+  "enabled": false,
+  "defaultEnabled": false,
+  "strictEvidenceRequired": true,
+  "allowTickerlessThemePieces": false,
+  "category": "hedge_fund",
+  "parserType": "generic",
+  "qualityScore": 7,
+  "sitemapUrl": "https://point72.com/sitemap.xml",
+  "accessNote": "Available in the canonical registry but disabled by default; enable when you want this source scanned."
+}

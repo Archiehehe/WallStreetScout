@@ -1,0 +1,16 @@
+{
+  "id": "morgan-stanley-insights",
+  "name": "Morgan Stanley Insights",
+  "domain": "morganstanley.com",
+  "sourceType": "primary",
+  "sourceClass": "primary_institutional",
+  "enabled": true,
+  "defaultEnabled": true,
+  "strictEvidenceRequired": true,
+  "allowTickerlessThemePieces": false,
+  "category": "bank_research",
+  "parserType": "generic",
+  "qualityScore": 9,
+  "sitemapUrl": "https://morganstanley.com/sitemap.xml",
+  "accessNote": "Default-enabled high-signal institutional source."
+}

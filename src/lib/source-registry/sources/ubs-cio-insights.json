@@ -1,0 +1,16 @@
+{
+  "id": "ubs-cio-insights",
+  "name": "UBS CIO Insights",
+  "domain": "ubs.com",
+  "sourceType": "primary",
+  "sourceClass": "primary_institutional",
+  "enabled": true,
+  "defaultEnabled": true,
+  "strictEvidenceRequired": true,
+  "allowTickerlessThemePieces": false,
+  "category": "wealth_research",
+  "parserType": "generic",
+  "qualityScore": 9,
+  "sitemapUrl": "https://ubs.com/sitemap.xml",
+  "accessNote": "Default-enabled high-signal institutional source."
+}

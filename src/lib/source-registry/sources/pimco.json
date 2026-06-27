@@ -1,0 +1,16 @@
+{
+  "id": "pimco",
+  "name": "PIMCO",
+  "domain": "pimco.com",
+  "sourceType": "primary",
+  "sourceClass": "primary_institutional",
+  "enabled": true,
+  "defaultEnabled": true,
+  "strictEvidenceRequired": true,
+  "allowTickerlessThemePieces": false,
+  "category": "asset_manager",
+  "parserType": "generic",
+  "qualityScore": 9,
+  "sitemapUrl": "https://pimco.com/sitemap.xml",
+  "accessNote": "Default-enabled high-signal institutional source."
+}

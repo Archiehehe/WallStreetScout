@@ -1,0 +1,16 @@
+{
+  "id": "jane-street",
+  "name": "Jane Street",
+  "domain": "janestreet.com",
+  "sourceType": "primary",
+  "sourceClass": "primary_institutional",
+  "enabled": false,
+  "defaultEnabled": false,
+  "strictEvidenceRequired": true,
+  "allowTickerlessThemePieces": false,
+  "category": "market_structure",
+  "parserType": "generic",
+  "qualityScore": 7,
+  "sitemapUrl": "https://janestreet.com/sitemap.xml",
+  "accessNote": "Available in the canonical registry but disabled by default; enable when you want this source scanned."
+}

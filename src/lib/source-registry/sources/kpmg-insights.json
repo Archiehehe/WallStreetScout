@@ -1,0 +1,16 @@
+{
+  "id": "kpmg-insights",
+  "name": "KPMG Insights",
+  "domain": "kpmg.com",
+  "sourceType": "primary",
+  "sourceClass": "public_institutional_research",
+  "enabled": false,
+  "defaultEnabled": false,
+  "strictEvidenceRequired": true,
+  "allowTickerlessThemePieces": true,
+  "category": "consulting_research",
+  "parserType": "generic",
+  "qualityScore": 7,
+  "sitemapUrl": "https://kpmg.com/sitemap.xml",
+  "accessNote": "Available in the canonical registry but disabled by default; enable when you want this source scanned."
+}
