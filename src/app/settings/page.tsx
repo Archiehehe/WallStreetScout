@@ -30,6 +30,11 @@ export default function SettingsPage() {
   const [providerStatus, setProviderStatus] = useState<Record<string, boolean>>({})
   const [loading, setLoading] = useState(true)
   const [sourceCount, setSourceCount] = useState(0)
+  const [diagnostics, setDiagnostics] = useState<{
+    sources: { enabled: number; enabledCore: number; enabledMedia: number }
+    latestScanRun?: { status?: string } | null
+    bootstrap: { convictionListsImported: number; managerHoldingsImported: number }
+  } | null>(null)
 
   // Scan state
   const [scanning, setScanning] = useState(false)
@@ -55,8 +60,12 @@ export default function SettingsPage() {
         const srcRes = await fetch('/api/sources')
         if (srcRes.ok) {
           const data = await srcRes.json()
-          sc = data.length
+          sc = Array.isArray(data) ? data.length : data.summary?.totalSources ?? 0
         }
+      } catch {}
+      try {
+        const diagnosticsRes = await fetch('/api/diagnostics')
+        if (diagnosticsRes.ok) setDiagnostics(await diagnosticsRes.json())
       } catch {}
 
       setProviderStatus(status)
@@ -131,18 +140,15 @@ export default function SettingsPage() {
           <CardTitle className="text-sm">Setup Checklist</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-xs">Neon connected</span>
-            <Badge variant={isNeon ? 'outline' : 'destructive'} className="text-xs">
-              {isNeon ? 'Connected' : 'Not configured'}
-            </Badge>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs">CRON_SECRET set</span>
-            <Badge variant={providerStatus['Cron Secret'] ? 'outline' : 'destructive'} className="text-xs">
-              {providerStatus['Cron Secret'] ? 'Configured' : 'Not set'}
-            </Badge>
-          </div>
+          <ChecklistItem label="Database connected" ok={isNeon} value={isNeon ? 'Configured' : 'Missing'} />
+          <ChecklistItem label="Sources synced" ok={(diagnostics?.sources.enabled ?? 0) > 0} value={`${sourceCount} sources`} />
+          <ChecklistItem label="Core sources enabled" ok={(diagnostics?.sources.enabledCore ?? 0) === 40} value={`${diagnostics?.sources.enabledCore ?? 0}/40`} />
+          <ChecklistItem label="Latest scan completed" ok={diagnostics?.latestScanRun?.status === 'completed'} value={diagnostics?.latestScanRun?.status ?? 'No scan'} />
+          <ChecklistItem label="Conviction lists imported" ok={(diagnostics?.bootstrap.convictionListsImported ?? 0) > 0} value={String(diagnostics?.bootstrap.convictionListsImported ?? 0)} />
+          <ChecklistItem label="Manager holdings imported" ok={(diagnostics?.bootstrap.managerHoldingsImported ?? 0) > 0} value={String(diagnostics?.bootstrap.managerHoldingsImported ?? 0)} />
+          <ChecklistItem label="No media/news sources enabled" ok={(diagnostics?.sources.enabledMedia ?? 0) === 0} value={String(diagnostics?.sources.enabledMedia ?? 0)} />
+          <div className="border-t border-[#1F1F1F] pt-2" />
+          <ChecklistItem label="CRON_SECRET set" ok={providerStatus['Cron Secret']} value={providerStatus['Cron Secret'] ? 'Configured' : 'Missing'} />
           <div className="flex items-center justify-between">
             <span className="text-xs">Finance APIs configured</span>
             <Badge variant="outline" className="text-xs">
@@ -246,6 +252,17 @@ export default function SettingsPage() {
           <p>Score threshold: 8+</p>
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+function ChecklistItem({ label, ok, value }: { label: string; ok: boolean; value: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-xs">{label}</span>
+      <Badge variant={ok ? 'outline' : 'destructive'} className="text-xs">
+        {value}
+      </Badge>
     </div>
   )
 }

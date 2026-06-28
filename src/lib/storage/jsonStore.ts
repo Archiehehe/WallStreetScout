@@ -298,10 +298,33 @@ export function createJsonStore(): Store {
         .filter(member => member.convictionListId === convictionListId)
         .sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999) || a.ticker.localeCompare(b.ticker))
     },
+    async createConvictionList(data) {
+      const items = await readCollection<ConvictionList>('conviction_lists')
+      const item: ConvictionList = { ...data, id: uuidv4(), createdAt: now(), updatedAt: now() }
+      items.push(item)
+      await writeCollection('conviction_lists', items)
+      return item
+    },
+    async addConvictionListMember(data) {
+      const items = await readCollection<ConvictionListMember>('conviction_list_members')
+      const existing = items.find(member => (
+        member.convictionListId === data.convictionListId &&
+        member.ticker.toUpperCase() === data.ticker.toUpperCase()
+      ))
+      if (existing) return existing
+      const item: ConvictionListMember = { ...data, ticker: data.ticker.toUpperCase(), id: uuidv4(), createdAt: now() }
+      items.push(item)
+      await writeCollection('conviction_list_members', items)
+      return item
+    },
 
     async getManagers() {
       const items = await readCollection<Manager>('managers')
       return items.sort((a, b) => a.name.localeCompare(b.name))
+    },
+    async getManagerHoldingsCount() {
+      const items = await readCollection<ManagerHolding>('manager_holdings')
+      return items.length
     },
     async get13FOverlapsForTickers(tickers) {
       const uniqueTickers = Array.from(new Set(tickers.map(ticker => ticker.toUpperCase()).filter(Boolean)))

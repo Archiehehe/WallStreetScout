@@ -335,8 +335,11 @@ export interface Store {
   getConvictionLists(): Promise<ConvictionList[]>
   getConvictionList(id: string): Promise<ConvictionList | null>
   getConvictionListMembers(convictionListId: string): Promise<ConvictionListMember[]>
+  createConvictionList(list: Omit<ConvictionList, 'id' | 'createdAt' | 'updatedAt'>): Promise<ConvictionList>
+  addConvictionListMember(member: Omit<ConvictionListMember, 'id' | 'createdAt'>): Promise<ConvictionListMember>
 
   // 13F Overlap
   getManagers(): Promise<Manager[]>
+  getManagerHoldingsCount(): Promise<number>
   get13FOverlapsForTickers(tickers: string[]): Promise<ThirteenFOverlap[]>
 }

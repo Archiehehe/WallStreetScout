@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import {
-  Rss, FolderKanban, Eye, Radio, Settings, DollarSign, ListChecks,
+  Rss, FolderKanban, Eye, Radio, Settings, DollarSign, ListChecks, Activity,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { href: '/baskets', label: 'Baskets', icon: FolderKanban },
   { href: '/watchlist', label: 'Watchlist', icon: Eye },
   { href: '/sources', label: 'Sources', icon: Radio },
+  { href: '/diagnostics', label: 'Diagnostics', icon: Activity },
   { href: '/settings', label: 'Settings', icon: Settings },
 ]
 

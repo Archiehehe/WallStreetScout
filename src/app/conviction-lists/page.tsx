@@ -4,13 +4,17 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import { EmptyState } from '@/components/EmptyState'
 import { ErrorState } from '@/components/ErrorState'
 import { LoadingState } from '@/components/LoadingState'
 import { TickerPill } from '@/components/TickerPill'
 import { ThirteenFOverlapPanel } from '@/components/ThirteenFOverlapPanel'
 import type { ConvictionListMember, ThirteenFOverlap } from '@/lib/storage/types'
-import { ExternalLink, Eye, FolderPlus } from 'lucide-react'
+import { Download, ExternalLink, Eye, FolderPlus, Plus, Upload } from 'lucide-react'
 
 interface ConvictionListData {
   id: string
@@ -38,9 +42,23 @@ export default function ConvictionListsPage() {
   const [lists, setLists] = useState<ConvictionListData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [formError, setFormError] = useState<string | null>(null)
+  const [formData, setFormData] = useState({
+    institution: '',
+    listName: '',
+    year: '',
+    period: '',
+    theme: '',
+    sector: '',
+    region: '',
+    sourceUrl: '',
+    confidence: 'needs_review',
+    tickers: '',
+    notes: '',
+  })
 
-  useEffect(() => {
-    const load = async () => {
+  const load = async () => {
       try {
         const res = await fetch('/api/conviction-lists')
         if (!res.ok) throw new Error('Failed to load conviction lists')
@@ -51,8 +69,9 @@ export default function ConvictionListsPage() {
         setLoading(false)
       }
     }
-    load()
-  }, [])
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { load() }, [])
 
   const saveBasket = async (list: ConvictionListData) => {
     await fetch('/api/baskets', {
@@ -80,16 +99,102 @@ export default function ConvictionListsPage() {
     }
   }
 
+  const handleAddList = async () => {
+    setFormError(null)
+    const res = await fetch('/api/conviction-lists', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      setFormError(data.error ?? 'Could not create conviction list.')
+      return
+    }
+    setDialogOpen(false)
+    setFormData({
+      institution: '',
+      listName: '',
+      year: '',
+      period: '',
+      theme: '',
+      sector: '',
+      region: '',
+      sourceUrl: '',
+      confidence: 'needs_review',
+      tickers: '',
+      notes: '',
+    })
+    await load()
+  }
+
   if (error) return <ErrorState message={error} />
   if (loading) return <LoadingState />
 
   return (
     <div>
-      <h1 className="mb-4 text-lg font-semibold">Conviction Lists</h1>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-lg font-semibold">Conviction Lists</h1>
+        <div className="flex gap-2">
+          <a href="/conviction-lists.example.csv" target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="sm" className="gap-1">
+              <Download className="h-3 w-3" /> View CSV Template
+            </Button>
+          </a>
+          <Button variant="outline" size="sm" className="gap-1" onClick={() => alert('Use: npm run conviction:import -- ./data/conviction-lists.csv')}>
+            <Upload className="h-3 w-3" /> Import CSV
+          </Button>
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger>
+              <Button variant="outline" size="sm" className="gap-1">
+                <Plus className="h-3 w-3" /> Add Conviction List
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader><DialogTitle>Add Conviction List</DialogTitle></DialogHeader>
+              <div className="grid gap-3 md:grid-cols-2">
+                <Field label="Institution" value={formData.institution} onChange={(value) => setFormData({ ...formData, institution: value })} />
+                <Field label="List name" value={formData.listName} onChange={(value) => setFormData({ ...formData, listName: value })} />
+                <Field label="Year" value={formData.year} onChange={(value) => setFormData({ ...formData, year: value })} />
+                <Field label="Period" value={formData.period} onChange={(value) => setFormData({ ...formData, period: value })} />
+                <Field label="Theme" value={formData.theme} onChange={(value) => setFormData({ ...formData, theme: value })} />
+                <Field label="Sector" value={formData.sector} onChange={(value) => setFormData({ ...formData, sector: value })} />
+                <Field label="Region" value={formData.region} onChange={(value) => setFormData({ ...formData, region: value })} />
+                <div>
+                  <label className="text-xs text-muted-foreground">Confidence</label>
+                  <Select value={formData.confidence} onValueChange={(value) => setFormData({ ...formData, confidence: value ?? 'needs_review' })}>
+                    <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="needs_review">needs_review</SelectItem>
+                      <SelectItem value="verified">verified</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <Field label="Source URL" value={formData.sourceUrl} onChange={(value) => setFormData({ ...formData, sourceUrl: value })} />
+              <div>
+                <label className="text-xs text-muted-foreground">Tickers comma-separated</label>
+                <Textarea value={formData.tickers} onChange={(event) => setFormData({ ...formData, tickers: event.target.value })} />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground">Notes</label>
+                <Textarea value={formData.notes} onChange={(event) => setFormData({ ...formData, notes: event.target.value })} />
+              </div>
+              {formError && <p className="text-xs text-red-500">{formError}</p>}
+              <Button onClick={handleAddList}>Save Conviction List</Button>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
       {lists.length === 0 ? (
         <EmptyState
-          title="No curated conviction lists yet"
-          description="Import only named, verified institution lists with 5+ screenable public equity tickers."
+          title="No conviction lists imported yet."
+          description="Add a verified bank or firm stock-pick list, or import a CSV of named lists with 5+ screenable public equity tickers."
+          actions={[
+            { label: 'Add Conviction List', onClick: () => setDialogOpen(true) },
+            { label: 'Import CSV', onClick: () => alert('Use: npm run conviction:import -- ./data/conviction-lists.csv') },
+            { label: 'View CSV Template', onClick: () => window.open('/conviction-lists.example.csv', '_blank') },
+          ]}
         />
       ) : (
         <div className="grid gap-3 xl:grid-cols-2">
@@ -145,6 +250,15 @@ export default function ConvictionListsPage() {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+function Field({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return (
+    <div>
+      <label className="text-xs text-muted-foreground">{label}</label>
+      <Input value={value} onChange={(event) => onChange(event.target.value)} className="h-9 text-xs" />
     </div>
   )
 }

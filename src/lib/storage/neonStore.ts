@@ -1,5 +1,5 @@
 import { neon } from '@neondatabase/serverless'
-import type { BasketMember, Store, ThirteenFOverlap, WatchlistItem } from './types'
+import type { BasketMember, ConvictionListMember, Store, ThirteenFOverlap, WatchlistItem } from './types'
 import { getDatabaseUrl } from './env'
 
 type Row = Record<string, unknown>
@@ -280,9 +280,27 @@ export function createNeonStore(): Store {
         [convictionListId],
       )
     },
+    async createConvictionList(input) {
+      const [query, params] = insertQuery('conviction_lists', input as Row)
+      return one(query, params)
+    },
+    async addConvictionListMember(input) {
+      const existing = await maybeOne<ConvictionListMember>(
+        'select * from conviction_list_members where conviction_list_id = $1 and ticker = upper($2)',
+        [input.convictionListId, input.ticker],
+      )
+      if (existing) return existing
+
+      const [query, params] = insertQuery('conviction_list_members', { ...input, ticker: input.ticker.toUpperCase() } as Row)
+      return one(query, params)
+    },
 
     async getManagers() {
       return many('select * from managers order by name asc')
+    },
+    async getManagerHoldingsCount() {
+      const rows = await getClient().query('select count(*)::int as count from manager_holdings', [])
+      return Number((rows[0] as Row | undefined)?.count ?? 0)
     },
     async get13FOverlapsForTickers(tickers) {
       const uniqueTickers = Array.from(new Set(tickers.map((ticker) => ticker.toUpperCase()).filter(Boolean)))

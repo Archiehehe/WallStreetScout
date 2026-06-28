@@ -29,6 +29,17 @@ interface ArticleData {
 }
 
 type FeedWindow = '7d' | '30d' | '90d' | 'all'
+interface DiagnosticsData {
+  sources: { enabled: number }
+  latestScanRun?: { id: string; status?: string } | null
+  scanSummary: {
+    sourcesScanned: number
+    urlsFound: number
+    articlesRejected: number
+    articlesFailed: number
+    commonRejectionReasons: Array<{ reason: string; count: number }>
+  }
+}
 
 const WINDOW_LABELS: Record<FeedWindow, string> = {
   '7d': 'Last 7 days',
@@ -41,6 +52,7 @@ export function FeedPage() {
   const [articles, setArticles] = useState<ArticleData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [diagnostics, setDiagnostics] = useState<DiagnosticsData | null>(null)
   const [search, setSearch] = useState('')
   const [firmFilter, setFirmFilter] = useState('')
   const [sectorFilter, setSectorFilter] = useState('')
@@ -67,6 +79,8 @@ export function FeedPage() {
       if (!res.ok) throw new Error('Failed to fetch')
       const data = await res.json()
       setArticles(Array.isArray(data) ? data : data.articles)
+      const diagnosticsRes = await fetch('/api/diagnostics')
+      if (diagnosticsRes.ok) setDiagnostics(await diagnosticsRes.json())
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load feed')
     } finally {
@@ -182,20 +196,51 @@ export function FeedPage() {
       </p>
 
       {articles.length === 0 ? (
-        <EmptyState
-          title={`No qualified institutional research in the ${WINDOW_LABELS[windowFilter].toLowerCase()}.`}
-          description={windowFilter === 'all' ? 'Run a scan across enabled institutional sources, or review the source catalog.' : 'Try a wider time window or run a fresh scan.'}
-          actions={[
-            ...(windowFilter !== '90d' && windowFilter !== 'all'
-              ? [{ label: 'Switch to 90 days', onClick: () => handleWindowChange('90d') }]
-              : []),
-            ...(windowFilter !== 'all'
-              ? [{ label: 'Show all eligible', onClick: () => handleWindowChange('all') }]
-              : []),
-            { label: scanning ? 'Scanning...' : 'Run Scan', onClick: handleRunScan },
-            { label: 'Go to Sources', onClick: () => router.push('/sources') },
-          ]}
-        />
+        <div className="space-y-3">
+          <div className="rounded-md border border-[#1F1F1F] bg-[#0A0A0A] p-4">
+            <h2 className="text-sm font-semibold text-[#E5E7EB]">No qualified institutional research in the selected window.</h2>
+            <p className="mt-2 text-xs text-[#9CA3AF]">
+              {diagnostics?.latestScanRun
+                ? diagnostics.scanSummary.urlsFound > 0
+                  ? 'Latest scan found articles, but none passed the 3+ screenable ticker and research-idea filters.'
+                  : 'Latest scan ran, but no source URLs were found.'
+                : 'No scan has run yet. Run a scan to collect institutional research from enabled core sources.'}
+            </p>
+            {diagnostics && (
+              <div className="mt-3 grid gap-2 text-xs md:grid-cols-4">
+                <DiagnosticFact label="Sources enabled" value={String(diagnostics.sources.enabled)} />
+                <DiagnosticFact label="Sources scanned" value={String(diagnostics.scanSummary.sourcesScanned)} />
+                <DiagnosticFact label="URLs found" value={String(diagnostics.scanSummary.urlsFound)} />
+                <DiagnosticFact label="Articles rejected" value={String(diagnostics.scanSummary.articlesRejected)} />
+              </div>
+            )}
+            {diagnostics?.scanSummary.commonRejectionReasons.length ? (
+              <div className="mt-3">
+                <p className="mb-1 text-xs font-medium text-[#D1D5DB]">Common rejection reasons</p>
+                <ul className="list-disc space-y-1 pl-5 text-xs text-[#9CA3AF]">
+                  {diagnostics.scanSummary.commonRejectionReasons.slice(0, 4).map((item) => (
+                    <li key={item.reason}>{item.reason} ({item.count})</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+          <EmptyState
+            title="Strict feed gates are active"
+            description="Empty is acceptable when no article has 3+ validated screenable public equity tickers from an eligible institutional research page."
+            actions={[
+              { label: scanning ? 'Scanning...' : 'Run Scan', onClick: handleRunScan },
+              ...(windowFilter !== '90d' && windowFilter !== 'all'
+                ? [{ label: 'Show 90 days', onClick: () => handleWindowChange('90d') }]
+                : []),
+              ...(windowFilter !== 'all'
+                ? [{ label: 'Show all eligible', onClick: () => handleWindowChange('all') }]
+                : []),
+              { label: 'Go to Sources', onClick: () => router.push('/sources') },
+              { label: 'View Scan Diagnostics', onClick: () => router.push('/diagnostics') },
+            ]}
+          />
+        </div>
       ) : (
         <div className="space-y-3">
           {articles.map((a) => (
@@ -234,6 +279,15 @@ export function FeedPage() {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+function DiagnosticFact({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-[#1F1F1F] px-3 py-2">
+      <div className="text-[11px] uppercase tracking-wide text-[#6B7280]">{label}</div>
+      <div className="text-sm font-semibold text-[#E5E7EB]">{value}</div>
     </div>
   )
 }

@@ -5,7 +5,29 @@ import { buildWhaleWisdomManagerUrl } from '@/lib/whaleWisdom'
 import { ExternalLink } from 'lucide-react'
 
 export function ThirteenFOverlapPanel({ overlaps }: { overlaps?: ThirteenFOverlap[] }) {
-  if (!overlaps || overlaps.length === 0) return null
+  if (!overlaps || overlaps.length === 0) {
+    return (
+      <div className="rounded-md border border-[#1F1F1F] bg-[#050505] p-3">
+        <h3 className="mb-2 text-xs font-semibold text-[#E5E7EB]">13F Overlap</h3>
+        <p className="text-xs text-[#9CA3AF]">
+          No 13F manager snapshots imported yet. Import curated manager holdings to compare this basket/list against reported 13F portfolios.
+        </p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <code className="rounded border border-[#1F1F1F] px-2 py-1 text-[11px] text-[#D1D5DB]">
+            node scripts/import-manager-holdings.mjs
+          </code>
+          <a
+            href="https://whalewisdom.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-[#60A5FA] hover:underline"
+          >
+            Open WhaleWisdom <ExternalLink className="h-3 w-3" />
+          </a>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="rounded-md border border-[#1F1F1F] bg-[#050505] p-3">

@@ -1,0 +1,6 @@
+institution,list_name,year,period,theme,sector,region,source_url,confidence,ticker,company_name,rank,note
+Example Institution,Example Named List,2026,,Example Theme,Technology,US,,needs_review,AAA,Example Company A,1,Template row only
+Example Institution,Example Named List,2026,,Example Theme,Technology,US,,needs_review,BBB,Example Company B,2,Template row only
+Example Institution,Example Named List,2026,,Example Theme,Technology,US,,needs_review,CCC,Example Company C,3,Template row only
+Example Institution,Example Named List,2026,,Example Theme,Technology,US,,needs_review,DDD,Example Company D,4,Template row only
+Example Institution,Example Named List,2026,,Example Theme,Technology,US,,needs_review,EEE,Example Company E,5,Template row only
