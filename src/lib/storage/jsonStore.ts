@@ -2,7 +2,8 @@ import { v4 as uuidv4 } from 'uuid'
 import type {
   Store, Source, Article, ArticleExtraction, Idea,
   Basket, BasketMember, WatchlistItem, MetricsSnapshot,
-  UserFeedback, ScanRun
+  UserFeedback, ScanRun, ConvictionList, ConvictionListMember,
+  Manager, ManagerHolding, ThirteenFOverlap
 } from './types'
 
 const DB_PATH = 'data/local-dev-db'
@@ -83,7 +84,20 @@ export function createJsonStore(): Store {
       if (filters?.minScore !== undefined) {
         items = items.filter(a => a.articleScore >= filters.minScore!)
       }
-      items.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+      if (filters?.status) {
+        items = items.filter(a => a.status === filters.status)
+      }
+      if (filters?.from) {
+        const fromTime = new Date(filters.from).getTime()
+        items = items.filter(a => new Date(a.publishedAt || a.createdAt).getTime() >= fromTime)
+      }
+      if (filters?.to) {
+        const toTime = new Date(filters.to).getTime()
+        items = items.filter(a => new Date(a.publishedAt || a.createdAt).getTime() <= toTime)
+      }
+      items.sort((a, b) => (
+        new Date(b.publishedAt || b.createdAt).getTime() - new Date(a.publishedAt || a.createdAt).getTime()
+      ))
       if (filters?.offset) items = items.slice(filters.offset)
       if (filters?.limit) items = items.slice(0, filters.limit)
       return items
@@ -252,6 +266,76 @@ export function createJsonStore(): Store {
       return items
         .sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime())
         .slice(0, limit)
+    },
+
+    async getConvictionLists() {
+      const items = await readCollection<ConvictionList>('conviction_lists')
+      return items.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    },
+    async getConvictionList(id) {
+      const items = await readCollection<ConvictionList>('conviction_lists')
+      return items.find(list => list.id === id || list.slug === id) ?? null
+    },
+    async getConvictionListMembers(convictionListId) {
+      const items = await readCollection<ConvictionListMember>('conviction_list_members')
+      return items
+        .filter(member => member.convictionListId === convictionListId)
+        .sort((a, b) => (a.rank ?? 9999) - (b.rank ?? 9999) || a.ticker.localeCompare(b.ticker))
+    },
+
+    async getManagers() {
+      const items = await readCollection<Manager>('managers')
+      return items.sort((a, b) => a.name.localeCompare(b.name))
+    },
+    async get13FOverlapsForTickers(tickers) {
+      const uniqueTickers = Array.from(new Set(tickers.map(ticker => ticker.toUpperCase()).filter(Boolean)))
+      if (uniqueTickers.length === 0) return []
+
+      const managers = (await readCollection<Manager>('managers')).filter(manager => manager.enabled)
+      const holdings = await readCollection<ManagerHolding>('manager_holdings')
+      const overlaps: ThirteenFOverlap[] = []
+
+      for (const manager of managers) {
+        const managerHoldings = holdings.filter(holding => holding.managerId === manager.id && holding.filingPeriod)
+        const latestPeriod = managerHoldings
+          .map(holding => holding.filingPeriod)
+          .sort()
+          .at(-1)
+        if (!latestPeriod) continue
+
+        const latestHoldings = managerHoldings.filter(holding => holding.filingPeriod === latestPeriod)
+        const matched = latestHoldings.filter(holding => uniqueTickers.includes(holding.ticker.toUpperCase()))
+        const matchedTickers = Array.from(new Set(matched.map(holding => holding.ticker.toUpperCase())))
+        if (matchedTickers.length < 2) continue
+
+        const weights = matched
+          .map(holding => holding.weightPct)
+          .filter((weight): weight is number => typeof weight === 'number')
+        const actionSummary: Record<string, number> = {}
+        for (const holding of matched) {
+          if (holding.action) actionSummary[holding.action] = (actionSummary[holding.action] ?? 0) + 1
+        }
+
+        overlaps.push({
+          managerId: manager.id,
+          managerSlug: manager.slug,
+          managerName: manager.name,
+          whalewisdomUrl: manager.whalewisdomUrl,
+          filingPeriod: latestPeriod,
+          overlapCount: matchedTickers.length,
+          overlapRatio: matchedTickers.length / uniqueTickers.length,
+          matchedTickers,
+          matchedManagerWeight: weights.length ? Number(weights.reduce((sum, weight) => sum + weight, 0).toFixed(2)) : undefined,
+          actionSummary: Object.keys(actionSummary).length ? actionSummary : undefined,
+        })
+      }
+
+      return overlaps.sort((a, b) => (
+        (b.matchedManagerWeight ?? -1) - (a.matchedManagerWeight ?? -1) ||
+        b.overlapCount - a.overlapCount ||
+        b.overlapRatio - a.overlapRatio ||
+        a.managerName.localeCompare(b.managerName)
+      ))
     },
   }
   return store

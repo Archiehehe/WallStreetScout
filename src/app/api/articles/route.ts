@@ -3,6 +3,9 @@ import { getStore } from '@/lib/storage'
 import { DEFAULT_THRESHOLD } from '@/lib/ingestion/scorer'
 import { ArticleSubmitError, submitArticleUrl } from '@/lib/ingestion/submitArticle'
 import { errorResponse, handleApiError } from '@/lib/api/responses'
+import { qualifyArticleForFeed } from '@/lib/feedQualification'
+
+type FeedWindow = '7d' | '30d' | '90d' | 'all'
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,8 +17,15 @@ export async function GET(request: NextRequest) {
     const sourceType = searchParams.get('sourceType')
     const saved = searchParams.get('saved')
     const sort = searchParams.get('sort') ?? 'newest'
+    const { window, from, to } = parseWindow(searchParams)
 
-    const articles = await store.getArticles({ minScore: DEFAULT_THRESHOLD })
+    const articles = await store.getArticles({
+      minScore: DEFAULT_THRESHOLD,
+      status: 'saved',
+      from,
+      to,
+      limit: 500,
+    })
     const baskets = await store.getBaskets()
     const savedArticleIds = new Set(baskets.map((basket) => basket.articleId).filter(Boolean))
 
@@ -25,7 +35,10 @@ export async function GET(request: NextRequest) {
       const source = await store.getSource(article.sourceId)
       const articleSourceType = extraction?.sourceType ?? source?.sourceType ?? 'unknown'
       const isSaved = savedArticleIds.has(article.id)
-      const tickers = extraction?.extractedTickers ?? []
+      const qualification = qualifyArticleForFeed(article, extraction, source)
+      if (!qualification.qualified) continue
+
+      const tickers = qualification.screenableTickers
 
       if (firm && extraction?.firm !== firm) continue
       if (sector && extraction?.sector !== sector) continue
@@ -40,6 +53,7 @@ export async function GET(request: NextRequest) {
           extraction?.theme,
           extraction?.sector,
           extraction?.region,
+          qualification.pageType,
           ...tickers,
         ].filter(Boolean).join(' ').toLowerCase()
         if (!haystack.includes(search)) continue
@@ -51,14 +65,17 @@ export async function GET(request: NextRequest) {
         url: article.url,
         sourceName: source?.name ?? 'Unknown',
         sourceType: articleSourceType,
+        sourceClass: source?.sourceClass ?? 'primary_institutional',
+        sourceTier: source?.sourceTier ?? 'secondary',
         firm: extraction?.firm,
         publishedAt: article.publishedAt,
         theme: extraction?.theme,
         sector: extraction?.sector,
         region: extraction?.region,
+        pageType: qualification.pageType,
         tickers,
         score: article.articleScore,
-        reasonShown: extraction?.reasonShown,
+        reasonShown: qualification.reason,
         saved: isSaved,
       })
     }
@@ -69,7 +86,7 @@ export async function GET(request: NextRequest) {
       return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
     })
 
-    return Response.json(result)
+    return Response.json({ window, articles: result, count: result.length })
   } catch (error) {
     return handleApiError(error)
   }
@@ -92,4 +109,33 @@ export async function POST(request: NextRequest) {
     }
     return handleApiError(error)
   }
+}
+
+function parseWindow(searchParams: URLSearchParams): { window: FeedWindow; from?: string; to?: string } {
+  const explicitFrom = normalizeDate(searchParams.get('from'))
+  const explicitTo = normalizeDate(searchParams.get('to'), true)
+  if (explicitFrom || explicitTo) {
+    return { window: 'all', from: explicitFrom, to: explicitTo }
+  }
+
+  const requested = searchParams.get('window')
+  const window: FeedWindow = requested === '7d' || requested === '90d' || requested === 'all'
+    ? requested
+    : '30d'
+  if (window === 'all') return { window }
+
+  const days = window === '7d' ? 7 : window === '90d' ? 90 : 30
+  const fromDate = new Date()
+  fromDate.setDate(fromDate.getDate() - days)
+  return { window, from: fromDate.toISOString() }
+}
+
+function normalizeDate(value: string | null, endOfDay = false): string | undefined {
+  if (!value) return undefined
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return undefined
+  if (endOfDay) {
+    date.setHours(23, 59, 59, 999)
+  }
+  return date.toISOString()
 }

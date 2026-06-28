@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { LoadingState } from '@/components/LoadingState'
 import { ErrorState } from '@/components/ErrorState'
 import { useRouter } from 'next/navigation'
+import type { ThirteenFOverlap } from '@/lib/storage/types'
 
 interface BasketData {
   id: string
@@ -15,6 +16,7 @@ interface BasketData {
   sector?: string
   tickers: string[]
   createdAt: string
+  overlaps?: ThirteenFOverlap[]
 }
 
 export default function BasketsPage() {
@@ -94,6 +96,7 @@ export default function BasketsPage() {
               sector={b.sector}
               tickers={b.tickers}
               createdAt={b.createdAt}
+              overlaps={b.overlaps}
               onRunMetrics={() => handleRunMetrics(b)}
               onAddAllToWatchlist={() => handleAddAllToWatchlist(b)}
               onExportCsv={() => handleExportCsv(b)}

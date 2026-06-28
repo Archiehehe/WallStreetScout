@@ -1,16 +1,17 @@
 {
-  "id": "j-p-morgan-research",
-  "name": "J.P. Morgan Market Insights",
-  "domain": "jpmorgan.com",
+  "id": "bofa-merrill-private-bank",
+  "name": "BofA / Merrill / Private Bank",
+  "domain": "privatebank.bankofamerica.com",
   "sourceType": "primary",
   "sourceClass": "primary_institutional",
   "enabled": true,
   "defaultEnabled": true,
+  "sourceTier": "core",
   "strictEvidenceRequired": true,
   "allowTickerlessThemePieces": false,
   "category": "bank_research",
   "parserType": "generic",
   "qualityScore": 9,
-  "sitemapUrl": "https://jpmorgan.com/sitemap.xml",
-  "accessNote": "Default-enabled high-signal institutional source."
+  "sitemapUrl": "https://privatebank.bankofamerica.com/sitemap.xml",
+  "accessNote": "Core institutional source."
 }

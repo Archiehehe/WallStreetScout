@@ -4,11 +4,12 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import {
-  Rss, FolderKanban, Eye, Radio, Settings, DollarSign,
+  Rss, FolderKanban, Eye, Radio, Settings, DollarSign, ListChecks,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
   { href: '/feed', label: 'Feed', icon: Rss },
+  { href: '/conviction-lists', label: 'Conviction Lists', icon: ListChecks },
   { href: '/baskets', label: 'Baskets', icon: FolderKanban },
   { href: '/watchlist', label: 'Watchlist', icon: Eye },
   { href: '/sources', label: 'Sources', icon: Radio },

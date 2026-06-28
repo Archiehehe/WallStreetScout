@@ -1,10 +1,7 @@
 import { NextRequest } from 'next/server'
 import { getStore } from '@/lib/storage'
-import { fetchUrlsFromSource, fetchArticleHtml } from '@/lib/ingestion/fetcher'
-import { parseArticleHtml } from '@/lib/ingestion/parser'
-import { extractFromArticle } from '@/lib/ingestion/extractor'
-import { generateDuplicateKey, isDuplicate } from '@/lib/ingestion/dedupe'
-import { DEFAULT_THRESHOLD } from '@/lib/ingestion/scorer'
+import { fetchUrlsFromSource } from '@/lib/ingestion/fetcher'
+import { submitArticleUrl } from '@/lib/ingestion/submitArticle'
 
 export async function POST(request: NextRequest) {
   const cronSecret = process.env.CRON_SECRET
@@ -31,44 +28,12 @@ export async function POST(request: NextRequest) {
 
   for (const fetched of urls) {
     try {
-      const dupKey = generateDuplicateKey(fetched.url, fetched.title || '')
-      if (await isDuplicate(dupKey)) {
-        results.push({ url: fetched.url, status: 'duplicate' })
-        continue
-      }
-
-      const html = await fetchArticleHtml(fetched.url)
-      const parsed = parseArticleHtml(html, fetched.url)
-      const extraction = extractFromArticle(parsed.title, parsed.cleanedText, source.sourceType)
-      const totalScore = Object.values(extraction.scoreBreakdown).reduce((a, b) => a + b, 0)
-
-      if (totalScore < DEFAULT_THRESHOLD) {
-        results.push({ url: fetched.url, status: 'low_score', score: totalScore })
-        continue
-      }
-
-      const article = await store.createArticle({
-        sourceId,
-        url: fetched.url,
-        canonicalUrl: parsed.canonicalUrl,
-        title: parsed.title,
-        author: parsed.author,
-        publishedAt: parsed.publishedAt || fetched.publishedAt || new Date().toISOString(),
-        fetchedAt: new Date().toISOString(),
-        rawText: html.slice(0, 50000),
-        cleanedText: parsed.cleanedText,
-        paywallStatus: parsed.paywallStatus,
-        duplicateKey: dupKey,
-        articleScore: totalScore,
-        status: 'saved',
+      const result = await submitArticleUrl(fetched.url, {
+        source,
+        fetchedTitle: fetched.title,
+        fetchedPublishedAt: fetched.publishedAt,
       })
-
-      await store.createExtraction({
-        articleId: article.id,
-        ...extraction,
-      })
-
-      results.push({ url: fetched.url, status: 'saved', score: totalScore })
+      results.push({ url: fetched.url, status: result.saved ? 'saved' : 'rejected', ...result })
     } catch (err) {
       results.push({ url: fetched.url, status: 'error', error: String(err) })
     }

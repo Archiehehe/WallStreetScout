@@ -35,6 +35,7 @@ import bmoCapitalMarketsInsights from './bmo-capital-markets-insights.json'
 import bnpParibasCibMarkets360 from './bnp-paribas-cib-markets-360.json'
 import bnpParibasGlobalMarkets from './bnp-paribas-global-markets.json'
 import bnyInvestments from './bny-investments.json'
+import bofaMerrillPrivateBank from './bofa-merrill-private-bank.json'
 import bofaResearch from './bofa-research.json'
 import brevanHoward from './brevan-howard.json'
 import bridgewater from './bridgewater.json'
@@ -112,6 +113,7 @@ import ingThink from './ing-think.json'
 import interAmericanDevelopmentBankResearch from './inter-american-development-bank-research.json'
 import invesco from './invesco.json'
 import ishares from './ishares.json'
+import jPMorganPrivateBank from './j-p-morgan-private-bank.json'
 import jPMorganResearch from './j-p-morgan-research.json'
 import janeStreet from './jane-street.json'
 import janusHenderson from './janus-henderson.json'
@@ -284,6 +286,7 @@ export const SOURCE_MODULES = [
   bnpParibasCibMarkets360,
   bnpParibasGlobalMarkets,
   bnyInvestments,
+  bofaMerrillPrivateBank,
   bofaResearch,
   brevanHoward,
   bridgewater,
@@ -361,6 +364,7 @@ export const SOURCE_MODULES = [
   interAmericanDevelopmentBankResearch,
   invesco,
   ishares,
+  jPMorganPrivateBank,
   jPMorganResearch,
   janeStreet,
   janusHenderson,

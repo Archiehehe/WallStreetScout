@@ -4,6 +4,7 @@ export interface Source {
   domain: string
   sourceType: 'primary'
   sourceClass?: 'primary_institutional' | 'public_institutional_research' | 'manual'
+  sourceTier?: 'core' | 'secondary' | 'archive'
   rssUrl?: string
   sitemapUrl?: string
   parserType?: string
@@ -19,6 +20,31 @@ export interface Source {
   updatedAt: string
 }
 
+export type PageType =
+  | 'institutional_research_idea'
+  | 'market_outlook'
+  | 'sector_or_theme_research'
+  | 'stock_basket_research'
+  | 'manager_commentary'
+  | 'education_page'
+  | 'product_page'
+  | 'tool_page'
+  | 'fund_or_etf_page'
+  | 'category_landing_page'
+  | 'generic_marketing_page'
+  | 'unknown'
+
+export type RejectionCategory =
+  | 'rejected_education_page'
+  | 'rejected_product_page'
+  | 'rejected_tool_page'
+  | 'rejected_fund_or_etf_page'
+  | 'rejected_category_landing_page'
+  | 'rejected_generic_marketing_page'
+  | 'rejected_not_research_idea'
+  | 'rejected_fewer_than_3_screenable_tickers'
+  | 'rejected_media_source_not_allowed'
+
 export interface Article {
   id: string
   sourceId: string
@@ -33,7 +59,8 @@ export interface Article {
   paywallStatus: 'unknown' | 'paywalled' | 'free'
   duplicateKey?: string
   articleScore: number
-  status: 'new' | 'scored' | 'saved' | 'dismissed'
+  status: 'new' | 'scored' | 'saved' | 'dismissed' | 'rejected'
+  rejectionReason?: string
   createdAt: string
   updatedAt: string
 }
@@ -49,6 +76,9 @@ export interface ArticleExtraction {
   region?: string
   summary?: string
   reasonShown?: string
+  pageType?: PageType
+  rejectionCategory?: RejectionCategory
+  screenableTickers?: string[]
   extractedTickers: string[]
   extractedCompanies: string[]
   scoreBreakdown: Record<string, number>
@@ -149,6 +179,80 @@ export interface ScanRun {
   errorsJson?: Record<string, unknown>
 }
 
+export interface ConvictionList {
+  id: string
+  slug: string
+  institution: string
+  listName: string
+  displayName: string
+  year?: number
+  period?: string
+  theme?: string
+  sector?: string
+  region?: string
+  sourceUrl?: string
+  sourceType: 'official_page' | 'official_pdf' | 'manual' | 'api'
+  accessStatus?: string
+  confidence: 'verified' | 'needs_review'
+  notes?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ConvictionListMember {
+  id: string
+  convictionListId: string
+  ticker: string
+  companyName?: string
+  rank?: number
+  weight?: number
+  action?: string
+  note?: string
+  sourceText?: string
+  createdAt: string
+}
+
+export interface Manager {
+  id: string
+  slug: string
+  name: string
+  cik?: string
+  whalewisdomUrl?: string
+  strategyTags?: string[]
+  enabled: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ManagerHolding {
+  id: string
+  managerId: string
+  filingPeriod?: string
+  ticker: string
+  companyName?: string
+  shares?: number
+  valueUsd?: number
+  weightPct?: number
+  changePct?: number
+  action?: 'new' | 'increased' | 'reduced' | 'sold_out' | 'unchanged' | 'unknown'
+  source: string
+  sourceUrl?: string
+  createdAt: string
+}
+
+export interface ThirteenFOverlap {
+  managerId: string
+  managerSlug: string
+  managerName: string
+  whalewisdomUrl?: string
+  filingPeriod?: string
+  overlapCount: number
+  overlapRatio: number
+  matchedTickers: string[]
+  matchedManagerWeight?: number
+  actionSummary?: Record<string, number>
+}
+
 export interface Store {
   // Sources
   getSources(): Promise<Source[]>
@@ -159,7 +263,7 @@ export interface Store {
   deleteSource(id: string): Promise<boolean>
 
   // Articles
-  getArticles(filters?: { minScore?: number; limit?: number; offset?: number }): Promise<Article[]>
+  getArticles(filters?: { minScore?: number; limit?: number; offset?: number; status?: Article['status']; from?: string; to?: string }): Promise<Article[]>
   getArticle(id: string): Promise<Article | null>
   getArticleByUrl(url: string): Promise<Article | null>
   getArticleByDuplicateKey(key: string): Promise<Article | null>
@@ -202,4 +306,13 @@ export interface Store {
   createScanRun(run: Omit<ScanRun, 'id'>): Promise<ScanRun>
   updateScanRun(id: string, updates: Partial<ScanRun>): Promise<ScanRun | null>
   getScanRuns(limit?: number): Promise<ScanRun[]>
+
+  // Conviction Lists
+  getConvictionLists(): Promise<ConvictionList[]>
+  getConvictionList(id: string): Promise<ConvictionList | null>
+  getConvictionListMembers(convictionListId: string): Promise<ConvictionListMember[]>
+
+  // 13F Overlap
+  getManagers(): Promise<Manager[]>
+  get13FOverlapsForTickers(tickers: string[]): Promise<ThirteenFOverlap[]>
 }

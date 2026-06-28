@@ -6,11 +6,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { FirmBadge } from '@/components/FirmBadge'
-import { ThemeBadge, SectorBadge, SourceTypeBadge } from '@/components/ThemeBadge'
-import { ScoreBadge } from '@/components/ScoreBadge'
+import { ThemeBadge, SectorBadge, SourceTypeBadge, SourceTierBadge, PageTypeBadge } from '@/components/ThemeBadge'
 import { TickerPill } from '@/components/TickerPill'
 import { LoadingState } from '@/components/LoadingState'
 import { ErrorState } from '@/components/ErrorState'
+import { ThirteenFOverlapPanel } from '@/components/ThirteenFOverlapPanel'
+import type { ThirteenFOverlap } from '@/lib/storage/types'
 import { ArrowLeft, ExternalLink } from 'lucide-react'
 
 interface ArticleData {
@@ -38,10 +39,19 @@ interface ArticleData {
     extractedCompanies: string[]
     confidence: number
   }
+  qualification?: {
+    qualified: boolean
+    reason: string
+    pageType: string
+    screenableTickers: string[]
+  }
   source: {
     name: string
     domain: string
+    sourceClass?: string
+    sourceTier?: string
   }
+  overlaps?: ThirteenFOverlap[]
 }
 
 export function ArticleDetailPage({ id }: { id: string }) {
@@ -70,6 +80,9 @@ export function ArticleDetailPage({ id }: { id: string }) {
   if (loading || !data) return <LoadingState />
 
   const { article, extraction, source } = data
+  const displayTickers = data.qualification?.screenableTickers?.length
+    ? data.qualification.screenableTickers
+    : extraction.extractedTickers
 
   function getTickerExcerpts(text: string, tickers: string[]): Record<string, string[]> {
     const sentences = text.split(/(?<=[.!?])\s+|\n+/).filter(Boolean)
@@ -83,7 +96,7 @@ export function ArticleDetailPage({ id }: { id: string }) {
   }
 
   const excerpts = article.cleanedText
-    ? getTickerExcerpts(article.cleanedText, extraction.extractedTickers)
+    ? getTickerExcerpts(article.cleanedText, displayTickers)
     : {}
 
   return (
@@ -99,10 +112,11 @@ export function ArticleDetailPage({ id }: { id: string }) {
               <CardTitle className="text-base">{article.title}</CardTitle>
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 {extraction.firm && <FirmBadge firm={extraction.firm} />}
-                {extraction.sourceType && <SourceTypeBadge type={extraction.sourceType} />}
+                {source.sourceClass && <SourceTypeBadge type={source.sourceClass} />}
+                {source.sourceTier && <SourceTierBadge tier={source.sourceTier} />}
                 {extraction.theme && <ThemeBadge theme={extraction.theme} />}
-                {extraction.sector && <SectorBadge sector={extraction.sector} />}
-                <ScoreBadge score={article.articleScore} />
+                {extraction.sector && extraction.sector.toLowerCase() !== extraction.theme?.toLowerCase() && <SectorBadge sector={extraction.sector} />}
+                {data.qualification?.pageType && <PageTypeBadge pageType={data.qualification.pageType} />}
               </div>
             </div>
           </div>
@@ -110,19 +124,19 @@ export function ArticleDetailPage({ id }: { id: string }) {
         <CardContent className="space-y-3">
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <span>{source.name}</span>
-            <span>·</span>
+            <span>-</span>
             <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
-            {article.author && <><span>·</span><span>{article.author}</span></>}
+            {article.author && <><span>-</span><span>{article.author}</span></>}
             <a href={article.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline ml-auto">
               <ExternalLink className="h-3 w-3" /> Open original
             </a>
           </div>
 
-          {extraction.extractedTickers.length > 0 && (
+          {displayTickers.length > 0 && (
             <div>
-              <p className="text-xs font-medium text-muted-foreground mb-1">Extracted Tickers</p>
+              <p className="text-xs font-medium text-muted-foreground mb-1">Screenable Tickers</p>
               <div className="flex flex-wrap gap-1">
-                {extraction.extractedTickers.map((t) => <TickerPill key={t} ticker={t} />)}
+                {displayTickers.map((t) => <TickerPill key={t} ticker={t} />)}
               </div>
             </div>
           )}
@@ -138,14 +152,14 @@ export function ArticleDetailPage({ id }: { id: string }) {
             </div>
           )}
 
-          {extraction.reasonShown && (
-            <p className="text-xs text-muted-foreground italic">{extraction.reasonShown}</p>
+          {data.qualification?.qualified && data.qualification.reason && (
+            <p className="text-xs text-muted-foreground">Why shown: {data.qualification.reason}</p>
           )}
 
           {Object.keys(excerpts).length > 0 && (
             <div className="space-y-3 pt-2 border-t border-[#1F1F1F]">
               <p className="text-xs font-medium text-muted-foreground">Mentions by Ticker</p>
-              {extraction.extractedTickers.map((ticker) => {
+              {displayTickers.map((ticker) => {
                 const tickerExcerpts = excerpts[ticker]
                 if (!tickerExcerpts) return null
                 return (
@@ -176,6 +190,8 @@ export function ArticleDetailPage({ id }: { id: string }) {
               </p>
             </div>
           )}
+
+          <ThirteenFOverlapPanel overlaps={data.overlaps} />
         </CardContent>
       </Card>
     </div>

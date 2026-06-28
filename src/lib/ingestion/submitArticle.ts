@@ -6,6 +6,7 @@ import { extractFromArticle } from './extractor'
 import { DEFAULT_THRESHOLD } from './scorer'
 import { generateDuplicateKey } from './dedupe'
 import { domainFromUrl, safeNormalizeUrl, uniqueTickers } from './url'
+import { qualifyArticleForFeed } from '@/lib/feedQualification'
 
 export type ArticleSubmitResult =
   | {
@@ -113,6 +114,11 @@ export async function submitArticleUrl(
   const score = Object.values(extraction.scoreBreakdown).reduce((sum, value) => sum + value, 0)
   const threshold = options.threshold ?? DEFAULT_THRESHOLD
   const extractedTickers = uniqueTickers(extraction.extractedTickers)
+  const qualification = qualifyArticleForFeed(
+    { title, url: normalizedUrl, cleanedText },
+    { ...extraction, extractedTickers },
+    source,
+  )
 
   if (score < threshold) {
     return {
@@ -122,6 +128,18 @@ export async function submitArticleUrl(
       reason: lowScoreReason(extraction),
       scoreBreakdown: extraction.scoreBreakdown,
       extractedTickers,
+      extractedCompanies: extraction.extractedCompanies,
+    }
+  }
+
+  if (!qualification.qualified) {
+    return {
+      saved: false,
+      score,
+      threshold,
+      reason: qualification.reason,
+      scoreBreakdown: extraction.scoreBreakdown,
+      extractedTickers: qualification.screenableTickers,
       extractedCompanies: extraction.extractedCompanies,
     }
   }
@@ -165,8 +183,11 @@ export async function submitArticleUrl(
     sector: extraction.sector,
     region: extraction.region,
     summary: cleanedText.slice(0, 500),
-    reasonShown: extraction.reasonShown,
-    extractedTickers,
+    reasonShown: qualification.reason,
+    pageType: qualification.pageType,
+    rejectionCategory: qualification.rejectionCategory,
+    screenableTickers: qualification.screenableTickers,
+    extractedTickers: qualification.screenableTickers,
     extractedCompanies: extraction.extractedCompanies,
     scoreBreakdown: extraction.scoreBreakdown,
     confidence: extraction.confidence,
@@ -174,7 +195,7 @@ export async function submitArticleUrl(
 
   await store.createExtraction(savedExtraction)
 
-  for (const ticker of extractedTickers) {
+  for (const ticker of qualification.screenableTickers) {
     await store.createIdea({
       articleId: article.id,
       ticker,
@@ -190,9 +211,9 @@ export async function submitArticleUrl(
     saved: true,
     articleId: article.id,
     score,
-    extractedTickers,
+    extractedTickers: qualification.screenableTickers,
     extractedCompanies: extraction.extractedCompanies,
-    reasonShown: extraction.reasonShown,
+    reasonShown: qualification.reason,
   }
 }
 

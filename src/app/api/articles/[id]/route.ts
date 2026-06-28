@@ -3,6 +3,7 @@ import { getStore } from '@/lib/storage'
 import { hasConfiguredMetricsProviders, runMetricsForTicker } from '@/lib/metrics/runMetrics'
 import type { MetricRow } from '@/components/MetricTable'
 import { handleApiError } from '@/lib/api/responses'
+import { qualifyArticleForFeed } from '@/lib/feedQualification'
 
 export async function GET(
   _request: NextRequest,
@@ -17,9 +18,13 @@ export async function GET(
 
     const extraction = await store.getExtraction(id)
     const source = await store.getSource(article.sourceId)
+    const qualification = qualifyArticleForFeed(article, extraction, source)
 
-    const tickers = extraction?.extractedTickers ?? []
+    const tickers = qualification.screenableTickers.length > 0
+      ? qualification.screenableTickers
+      : extraction?.extractedTickers ?? []
     const metricsResults = await Promise.all(tickers.slice(0, 5).map(t => runMetricsForTicker(t)))
+    const overlaps = qualification.qualified ? await store.get13FOverlapsForTickers(tickers) : []
 
     const metrics: MetricRow[] = []
     for (const m of metricsResults) {
@@ -41,15 +46,19 @@ export async function GET(
         rawText: article.rawText?.slice(0, 500),
       },
       extraction,
+      qualification,
       source: {
         name: source?.name ?? 'Unknown',
         domain: source?.domain ?? '',
+        sourceClass: source?.sourceClass,
+        sourceTier: source?.sourceTier,
       },
       metrics,
       metricsStatus: metrics.length === 0 && !hasConfiguredMetricsProviders()
         ? 'provider_not_configured'
         : 'available',
       tickerMetrics: metricsResults.filter(Boolean),
+      overlaps,
     })
   } catch (error) {
     return handleApiError(error)

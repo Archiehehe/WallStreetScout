@@ -12,11 +12,14 @@ export async function GET() {
     for (const basket of baskets) {
       const members = await store.getBasketMembers(basket.id)
       const article = basket.articleId ? await store.getArticle(basket.articleId) : null
+      const tickers = members.map(m => m.ticker)
+      const overlaps = await store.get13FOverlapsForTickers(tickers)
       result.push({
         ...basket,
-        tickers: members.map(m => m.ticker),
+        tickers,
         sourceUrl: article?.url,
         sourceTitle: article?.title,
+        overlaps,
       })
     }
 
@@ -44,6 +47,13 @@ export async function POST(request: NextRequest) {
         theme: body.theme ?? extraction?.theme,
         title: article?.title,
       })
+
+    const existingBaskets = await store.getBaskets()
+    const existing = existingBaskets.find((basket) => basket.name.toLowerCase() === name.toLowerCase())
+    if (existing) {
+      const members = await store.getBasketMembers(existing.id)
+      return Response.json({ ...existing, tickers: members.map((member) => member.ticker), duplicate: true })
+    }
 
     const basket = await store.createBasket({
       name,

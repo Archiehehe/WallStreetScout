@@ -2,9 +2,7 @@
 
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { FirmBadge } from '@/components/FirmBadge'
-import { ThemeBadge, SectorBadge, SourceTypeBadge } from '@/components/ThemeBadge'
-import { ScoreBadge } from '@/components/ScoreBadge'
+import { ThemeBadge, SectorBadge, SourceTypeBadge, SourceTierBadge, PageTypeBadge } from '@/components/ThemeBadge'
 import { TickerPill } from '@/components/TickerPill'
 import { Eye, Plus, TrendingUp, ExternalLink, ThumbsUp, ThumbsDown, EyeOff, Zap } from 'lucide-react'
 
@@ -15,11 +13,13 @@ interface ArticleCardProps {
   source: string
   firm?: string
   sourceType: string
+  sourceClass?: string
+  sourceTier?: string
+  pageType?: string
   publishedAt: string
   theme?: string
   sector?: string
   tickers: string[]
-  score: number
   reasonShown?: string
   onSaveBasket?: () => void
   onRunMetrics?: () => void
@@ -37,11 +37,13 @@ export function ArticleCard({
   source,
   firm,
   sourceType,
+  sourceClass,
+  sourceTier,
+  pageType,
   publishedAt,
   theme,
   sector,
   tickers,
-  score,
   reasonShown,
   onSaveBasket,
   onRunMetrics,
@@ -54,6 +56,13 @@ export function ArticleCard({
   const date = new Date(publishedAt).toLocaleDateString('en-US', {
     month: 'short', day: 'numeric', year: 'numeric',
   })
+  const badges = dedupeBadges([
+    { kind: 'sourceClass', value: sourceClass ?? sourceType },
+    { kind: 'sourceTier', value: sourceTier },
+    { kind: 'theme', value: theme },
+    { kind: 'sector', value: sector },
+    { kind: 'pageType', value: pageType },
+  ]).slice(0, 4)
 
   return (
     <Card className="border border-[#1F1F1F] bg-[#0A0A0A] hover:border-[#3B82F6]/40 transition-colors shadow-sm">
@@ -65,26 +74,28 @@ export function ArticleCard({
           >
             {title}
           </a>
-          <ScoreBadge score={score} />
         </div>
 
         <div className="flex items-center gap-2 text-xs text-[#9CA3AF] mb-2">
           <span className="font-medium text-[#E2E8F0]">{source}</span>
           {firm && (
             <>
-              <span className="text-[#374151]">·</span>
+              <span className="text-[#374151]">-</span>
               <span>{firm}</span>
             </>
           )}
-          <span className="text-[#374151]">·</span>
+          <span className="text-[#374151]">-</span>
           <span>{date}</span>
         </div>
 
         <div className="flex flex-wrap items-center gap-1 mb-2">
-          {firm && <FirmBadge firm={firm} />}
-          <SourceTypeBadge type={sourceType} />
-          {theme && <ThemeBadge theme={theme} />}
-          {sector && <SectorBadge sector={sector} />}
+          {badges.map((badge) => {
+            if (badge.kind === 'sourceClass') return <SourceTypeBadge key={`${badge.kind}:${badge.value}`} type={badge.value} />
+            if (badge.kind === 'sourceTier') return <SourceTierBadge key={`${badge.kind}:${badge.value}`} tier={badge.value} />
+            if (badge.kind === 'theme') return <ThemeBadge key={`${badge.kind}:${badge.value}`} theme={badge.value} />
+            if (badge.kind === 'sector') return <SectorBadge key={`${badge.kind}:${badge.value}`} sector={badge.value} />
+            return <PageTypeBadge key={`${badge.kind}:${badge.value}`} pageType={badge.value} />
+          })}
         </div>
 
         {tickers.length > 0 && (
@@ -96,8 +107,8 @@ export function ArticleCard({
         )}
 
         {reasonShown && (
-          <p className="text-[11px] text-[#6B7280] italic mb-3 leading-relaxed">
-            Why: {reasonShown}
+          <p className="text-[11px] text-[#8B949E] mb-3 leading-relaxed">
+            Why shown: {reasonShown}
           </p>
         )}
 
@@ -134,4 +145,21 @@ export function ArticleCard({
       </CardContent>
     </Card>
   )
+}
+
+function dedupeBadges(badges: Array<{ kind: string; value?: string }>): Array<{ kind: string; value: string }> {
+  const seen = new Set<string>()
+  const result: Array<{ kind: string; value: string }> = []
+
+  for (const badge of badges) {
+    const value = badge.value?.trim()
+    if (!value) continue
+
+    const key = value.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    result.push({ kind: badge.kind, value })
+  }
+
+  return result
 }

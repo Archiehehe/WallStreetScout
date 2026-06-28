@@ -1,5 +1,5 @@
 import { neon } from '@neondatabase/serverless'
-import type { BasketMember, Store, WatchlistItem } from './types'
+import type { BasketMember, Store, ThirteenFOverlap, WatchlistItem } from './types'
 import { getDatabaseUrl } from './env'
 
 type Row = Record<string, unknown>
@@ -123,12 +123,24 @@ export function createNeonStore(): Store {
         params.push(filters.minScore)
         where.push(`article_score >= $${params.length}`)
       }
+      if (filters?.status) {
+        params.push(filters.status)
+        where.push(`status = $${params.length}`)
+      }
+      if (filters?.from) {
+        params.push(filters.from)
+        where.push(`coalesce(published_at, created_at) >= $${params.length}`)
+      }
+      if (filters?.to) {
+        params.push(filters.to)
+        where.push(`coalesce(published_at, created_at) <= $${params.length}`)
+      }
       const clauses = where.length ? `where ${where.join(' and ')}` : ''
       const limit = filters?.limit ?? 50
       const offset = filters?.offset ?? 0
       params.push(limit, offset)
       return many(
-        `select * from articles ${clauses} order by published_at desc limit $${params.length - 1} offset $${params.length}`,
+        `select * from articles ${clauses} order by published_at desc nulls last, created_at desc limit $${params.length - 1} offset $${params.length}`,
         params,
       )
     },
@@ -243,6 +255,107 @@ export function createNeonStore(): Store {
     },
     async getScanRuns(limit = 10) {
       return many('select * from scan_runs order by started_at desc limit $1', [limit])
+    },
+
+    async getConvictionLists() {
+      return many('select * from conviction_lists order by updated_at desc, display_name asc')
+    },
+    async getConvictionList(id) {
+      return maybeOne('select * from conviction_lists where id = $1 or slug = $1 limit 1', [id])
+    },
+    async getConvictionListMembers(convictionListId) {
+      return many(
+        'select * from conviction_list_members where conviction_list_id = $1 order by rank nulls last, ticker asc',
+        [convictionListId],
+      )
+    },
+
+    async getManagers() {
+      return many('select * from managers order by name asc')
+    },
+    async get13FOverlapsForTickers(tickers) {
+      const uniqueTickers = Array.from(new Set(tickers.map((ticker) => ticker.toUpperCase()).filter(Boolean)))
+      if (uniqueTickers.length === 0) return []
+
+      const rows = await getClient().query(
+        `
+          with latest_period as (
+            select manager_id, max(filing_period) as filing_period
+            from manager_holdings
+            where filing_period is not null
+            group by manager_id
+          )
+          select
+            m.id as manager_id,
+            m.slug as manager_slug,
+            m.name as manager_name,
+            m.whalewisdom_url,
+            h.filing_period,
+            h.ticker,
+            h.weight_pct,
+            h.action
+          from managers m
+          join latest_period lp on lp.manager_id = m.id
+          join manager_holdings h
+            on h.manager_id = m.id
+           and h.filing_period = lp.filing_period
+          where m.enabled = true
+            and upper(h.ticker) = any($1)
+        `,
+        [uniqueTickers],
+      )
+
+      const byManager = new Map<string, ThirteenFOverlap & { _weights: number[] }>()
+      for (const row of rows as Row[]) {
+        const managerId = String(row.manager_id)
+        const ticker = String(row.ticker).toUpperCase()
+        const existing = byManager.get(managerId)
+        const weight = row.weight_pct === null || row.weight_pct === undefined ? undefined : Number(row.weight_pct)
+        const action = typeof row.action === 'string' ? row.action : undefined
+
+        if (!existing) {
+          byManager.set(managerId, {
+            managerId,
+            managerSlug: String(row.manager_slug),
+            managerName: String(row.manager_name),
+            whalewisdomUrl: row.whalewisdom_url ? String(row.whalewisdom_url) : undefined,
+            filingPeriod: row.filing_period ? String(row.filing_period) : undefined,
+            overlapCount: 1,
+            overlapRatio: 1 / uniqueTickers.length,
+            matchedTickers: [ticker],
+            matchedManagerWeight: weight,
+            actionSummary: action ? { [action]: 1 } : undefined,
+            _weights: weight === undefined ? [] : [weight],
+          })
+          continue
+        }
+
+        if (!existing.matchedTickers.includes(ticker)) {
+          existing.matchedTickers.push(ticker)
+          existing.overlapCount = existing.matchedTickers.length
+          existing.overlapRatio = existing.overlapCount / uniqueTickers.length
+        }
+        if (weight !== undefined) existing._weights.push(weight)
+        if (action) {
+          existing.actionSummary = existing.actionSummary ?? {}
+          existing.actionSummary[action] = (existing.actionSummary[action] ?? 0) + 1
+        }
+      }
+
+      return Array.from(byManager.values())
+        .filter((overlap) => overlap.overlapCount >= 2)
+        .map(({ _weights, ...overlap }) => ({
+          ...overlap,
+          matchedManagerWeight: _weights.length > 0
+            ? Number(_weights.reduce((sum, value) => sum + value, 0).toFixed(2))
+            : undefined,
+        }))
+        .sort((a, b) => (
+          (b.matchedManagerWeight ?? -1) - (a.matchedManagerWeight ?? -1) ||
+          b.overlapCount - a.overlapCount ||
+          b.overlapRatio - a.overlapRatio ||
+          a.managerName.localeCompare(b.managerName)
+        ))
     },
   }
   return store

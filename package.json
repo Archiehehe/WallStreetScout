@@ -7,9 +7,11 @@
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:sync:sources": "node scripts/db-sync-sources.mjs",
     "db:reset": "node scripts/db-reset.mjs",
+    "db:cleanup:generic": "node scripts/cleanup-generic-pages.mjs --confirm",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

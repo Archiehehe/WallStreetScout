@@ -18,6 +18,8 @@ interface SourceItem {
   name: string
   domain: string
   sourceType: string
+  sourceClass?: string
+  sourceTier?: 'core' | 'secondary' | 'archive'
   rssUrl?: string
   parserType?: string
   enabled: boolean
@@ -138,6 +140,12 @@ export default function SourcesPage() {
   if (error) return <ErrorState message={error} />
   if (loading) return <LoadingState />
 
+  const groupedSources = {
+    core: sources.filter((source) => source.sourceTier === 'core'),
+    secondary: sources.filter((source) => !source.sourceTier || source.sourceTier === 'secondary'),
+    archive: sources.filter((source) => source.sourceTier === 'archive'),
+  }
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
@@ -185,47 +193,70 @@ export default function SourcesPage() {
         />
       ) : (
         <>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Domain</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Quality</TableHead>
-                  <TableHead>Enabled</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sources.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell className="text-sm font-medium">{s.name}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{s.domain}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="text-xs capitalize">{s.sourceType}</Badge>
-                    </TableCell>
-                    <TableCell className="text-xs">{s.qualityScore}/10</TableCell>
-                    <TableCell>
-                      <Switch checked={s.enabled} onCheckedChange={(v) => handleToggle(s.id, v)} />
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(s)} title="Edit">
-                          <Pencil className="h-3 w-3" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => handleTestSource(s.id)} title="Test scan">
-                          <Play className="h-3 w-3" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-500" onClick={() => handleDelete(s.id)} title="Delete">
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <div className="space-y-5">
+            {([
+              ['core', 'Core', 'Enabled by default for the primary feed scan.'],
+              ['secondary', 'Secondary', 'Institutional sources kept available but disabled by default.'],
+              ['archive', 'Archive', 'Historical or low-priority sources kept out of default scans.'],
+            ] as const).map(([tier, label, description]) => {
+              const tierSources = groupedSources[tier]
+              if (tierSources.length === 0) return null
+              return (
+                <div key={tier} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-semibold">{label}</h2>
+                    <Badge variant="outline" className="text-xs">{tierSources.length}</Badge>
+                    <p className="text-xs text-muted-foreground">{description}</p>
+                  </div>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Domain</TableHead>
+                          <TableHead>Class</TableHead>
+                          <TableHead>Tier</TableHead>
+                          <TableHead>Quality</TableHead>
+                          <TableHead>Enabled</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {tierSources.map((s) => (
+                          <TableRow key={s.id}>
+                            <TableCell className="text-sm font-medium">{s.name}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground">{s.domain}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary" className="text-xs capitalize">{formatSourceClass(s.sourceClass ?? s.sourceType)}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs capitalize">{s.sourceTier ?? 'secondary'}</Badge>
+                            </TableCell>
+                            <TableCell className="text-xs">{s.qualityScore}/10</TableCell>
+                            <TableCell>
+                              <Switch checked={s.enabled} onCheckedChange={(v) => handleToggle(s.id, v)} />
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => openEdit(s)} title="Edit">
+                                  <Pencil className="h-3 w-3" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => handleTestSource(s.id)} title="Test scan">
+                                  <Play className="h-3 w-3" />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-500" onClick={() => handleDelete(s.id)} title="Delete">
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )
+            })}
           </div>
 
           <Dialog open={editDialogOpen} onOpenChange={(open) => { setEditDialogOpen(open); if (!open) { setEditingId(null); resetForm() }}}>
@@ -252,4 +283,8 @@ export default function SourcesPage() {
       )}
     </div>
   )
+}
+
+function formatSourceClass(value: string): string {
+  return value.replace(/_/g, ' ')
 }

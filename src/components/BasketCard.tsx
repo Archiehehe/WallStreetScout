@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button'
 import { FirmBadge } from '@/components/FirmBadge'
 import { ThemeBadge, SectorBadge } from '@/components/ThemeBadge'
 import { TickerPill } from '@/components/TickerPill'
+import { ThirteenFOverlapPanel } from '@/components/ThirteenFOverlapPanel'
+import type { ThirteenFOverlap } from '@/lib/storage/types'
 import { TrendingUp, Eye, Download, Trash2 } from 'lucide-react'
 
 interface BasketCardProps {
@@ -16,6 +18,7 @@ interface BasketCardProps {
   tickers: string[]
   createdAt: string
   metricsStatus?: string
+  overlaps?: ThirteenFOverlap[]
   onRunMetrics?: () => void
   onAddAllToWatchlist?: () => void
   onExportCsv?: () => void
@@ -29,6 +32,7 @@ export function BasketCard({
   sector,
   tickers,
   createdAt,
+  overlaps,
   onRunMetrics,
   onAddAllToWatchlist,
   onExportCsv,
@@ -54,7 +58,7 @@ export function BasketCard({
 
         <div className="flex items-center gap-2 text-xs text-[#9CA3AF] mt-2 mb-2">
           <span>Created {date}</span>
-          <span className="text-[#374151]">·</span>
+          <span className="text-[#374151]">-</span>
           <span>{tickers.length} stocks</span>
         </div>
 
@@ -62,6 +66,10 @@ export function BasketCard({
           {tickers.map((t) => (
             <TickerPill key={t} ticker={t} />
           ))}
+        </div>
+
+        <div className="mb-3">
+          <ThirteenFOverlapPanel overlaps={overlaps} />
         </div>
 
         <div className="flex flex-wrap gap-1 pt-1 border-t border-[#1F1F1F]">

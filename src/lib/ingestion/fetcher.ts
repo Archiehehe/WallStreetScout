@@ -8,7 +8,8 @@ interface FetchedUrl {
   title?: string
 }
 
-const DEFAULT_MAX_URLS_PER_SOURCE = 12
+const DEFAULT_MAX_URLS_PER_SOURCE = 8
+const DEFAULT_FETCH_TIMEOUT_MS = 12000
 const RESEARCH_URL_PATTERN = /insight|research|commentary|market|outlook|view|perspective|article|publication|memo|letter|strategy|investment|portfolio|econom|thought|analysis/i
 
 export async function fetchUrlsFromSource(source: Source): Promise<FetchedUrl[]> {
@@ -36,7 +37,7 @@ export async function fetchUrlsFromSource(source: Source): Promise<FetchedUrl[]>
 }
 
 export async function fetchRss(rssUrl: string, sourceId: string): Promise<FetchedUrl[]> {
-  const response = await fetch(rssUrl, {
+  const response = await timedFetch(rssUrl, {
     headers: { 'User-Agent': 'InstitutionalIdeaFeed/1.0' },
   })
   if (!response.ok) {
@@ -86,7 +87,7 @@ export async function fetchRss(rssUrl: string, sourceId: string): Promise<Fetche
 }
 
 export async function fetchSitemap(sitemapUrl: string, sourceId: string): Promise<FetchedUrl[]> {
-  const response = await fetch(sitemapUrl, {
+  const response = await timedFetch(sitemapUrl, {
     headers: { 'User-Agent': 'InstitutionalIdeaFeed/1.0' },
   })
   if (!response.ok) {
@@ -123,11 +124,23 @@ function prioritizeFetchedUrls(urls: FetchedUrl[]): FetchedUrl[] {
 }
 
 export async function fetchArticleHtml(url: string): Promise<string> {
-  const response = await fetch(url, {
+  const response = await timedFetch(url, {
     headers: { 'User-Agent': 'InstitutionalIdeaFeed/1.0' },
   })
   if (!response.ok) {
     throw new Error(`Fetch failed with HTTP ${response.status}`)
   }
   return response.text()
+}
+
+async function timedFetch(input: string, init: RequestInit): Promise<Response> {
+  const timeoutMs = Number(process.env.SCAN_FETCH_TIMEOUT_MS ?? DEFAULT_FETCH_TIMEOUT_MS)
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), Math.max(1000, timeoutMs))
+
+  try {
+    return await fetch(input, { ...init, signal: controller.signal })
+  } finally {
+    clearTimeout(timeout)
+  }
 }
