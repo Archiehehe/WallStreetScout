@@ -40,13 +40,14 @@ export async function POST() {
     }
 
     return Response.json({
+      ok: true,
+      message: `Import complete: ${created} created, ${updated} updated, ${skipped} skipped, ${failed} failed`,
       created,
       updated,
       skipped,
       failed,
       total: results.length,
-      results,
-      failedItems,
+      errors: failedItems,
     })
   } catch (error) {
     return handleApiError(error)

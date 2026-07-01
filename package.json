@@ -12,6 +12,7 @@
     "db:cleanup:generic": "node scripts/cleanup-generic-pages.mjs --confirm",
     "scan:once": "node scripts/run-scan-once.mjs",
     "conviction:import": "node scripts/import-conviction-lists-csv.mjs",
+    "conviction:import-seed": "echo 'Import via UI at /conviction-lists'",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

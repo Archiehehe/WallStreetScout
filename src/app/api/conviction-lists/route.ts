@@ -22,6 +22,10 @@ export async function GET(request: NextReq) {
     let lists = await store.getConvictionLists()
 
     // Filtering
+    // Default: exclude rejected lists
+    if (!reviewStatus) {
+      lists = lists.filter(list => list.reviewStatus !== 'rejected')
+    }
     if (search) {
       const searchLower = search.toLowerCase()
       lists = lists.filter(list => (

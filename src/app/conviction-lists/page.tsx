@@ -73,12 +73,14 @@ interface QueryData {
 }
 
 interface ImportResult {
+  ok: boolean
+  message: string
   created: number
   updated: number
   skipped: number
   failed: number
   total: number
-  failedItems: { institution: string; listName: string; errors: string[] }[]
+  errors: { institution: string; listName: string; errors: string[] }[]
 }
 
 export default function ConvictionListsPage() {
@@ -351,7 +353,7 @@ export default function ConvictionListsPage() {
       {/* Import Result */}
       {importResult && (
         <div className="rounded-md border border-[#1F1F1F] bg-[#0A0A0A] p-4">
-          <h3 className="text-sm font-medium mb-2">Import Results</h3>
+          <h3 className="text-sm font-medium mb-2">{importResult.message}</h3>
           <div className="grid grid-cols-4 gap-4 mb-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-green-400">{importResult.created}</div>
@@ -370,11 +372,11 @@ export default function ConvictionListsPage() {
               <div className="text-xs text-muted-foreground">Failed</div>
             </div>
           </div>
-          {importResult.failedItems.length > 0 && (
+          {importResult.errors.length > 0 && (
             <details>
               <summary className="text-xs cursor-pointer">View failed items</summary>
               <div className="mt-2 space-y-2 text-xs">
-                {importResult.failedItems.map((item, i) => (
+                {importResult.errors.map((item, i) => (
                   <div key={i} className="rounded border border-red-800 bg-red-900/20 p-2">
                     <div className="font-medium">{item.institution} - {item.listName}</div>
                     <div className="text-red-400">{item.errors.join(', ')}</div>
