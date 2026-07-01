@@ -96,7 +96,7 @@ for (const source of sources) {
 
   const isCore = CORE_DOMAINS.has(domainLower)
   const tier = isCore ? 'core' : 'secondary'
-  const shouldBeEnabled = isCore
+  const shouldBeEnabled = isCore && (source.enabled !== false)
   const sourceClass = ['primary_institutional', 'public_institutional_research', 'manual'].includes(source.sourceClass)
     ? source.sourceClass
     : 'primary_institutional'
@@ -123,6 +123,8 @@ for (const source of sources) {
       allowed_path_patterns,
       blocked_path_patterns,
       preferred_discovery_method,
+      known_article_index_urls,
+      source_needs_url_pattern,
       quality_score,
       notes,
       updated_at
@@ -145,6 +147,8 @@ for (const source of sources) {
       ${source.allowedPathPatterns ?? []},
       ${source.blockedPathPatterns ?? []},
       ${source.preferredDiscoveryMethod ?? null},
+      ${source.knownArticleIndexUrls ?? []},
+      ${source.sourceNeedsUrlPattern ?? false},
       ${source.qualityScore ?? 5},
       ${source.notes ?? null},
       now()
@@ -167,6 +171,8 @@ for (const source of sources) {
       allowed_path_patterns = excluded.allowed_path_patterns,
       blocked_path_patterns = excluded.blocked_path_patterns,
       preferred_discovery_method = excluded.preferred_discovery_method,
+      known_article_index_urls = excluded.known_article_index_urls,
+      source_needs_url_pattern = excluded.source_needs_url_pattern,
       quality_score = excluded.quality_score,
       notes = excluded.notes,
       updated_at = now()

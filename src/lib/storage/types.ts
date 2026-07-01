@@ -17,6 +17,8 @@ export interface Source {
   allowedPathPatterns?: string[]
   blockedPathPatterns?: string[]
   preferredDiscoveryMethod?: string
+  knownArticleIndexUrls?: string[]
+  sourceNeedsUrlPattern?: boolean
   qualityScore: number
   notes?: string
   createdAt: string

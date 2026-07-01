@@ -13,5 +13,17 @@
   "parserType": "generic",
   "qualityScore": 9,
   "sitemapUrl": "https://privatebank.jpmorgan.com/sitemap.xml",
-  "accessNote": "Core institutional source."
+  "accessNote": "Core institutional source.",
+  "knownArticleIndexUrls": [
+    "https://www.privatebank.jpmorgan.com/articles"
+  ],
+  "allowedPathPatterns": [
+    "/articles"
+  ],
+  "blockedPathPatterns": [
+    "/about",
+    "/contact",
+    "/giving",
+    "/philanthropy"
+  ]
 }

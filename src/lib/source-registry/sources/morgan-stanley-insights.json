@@ -12,5 +12,21 @@
   "parserType": "generic",
   "qualityScore": 9,
   "sitemapUrl": "https://morganstanley.com/sitemap.xml",
-  "accessNote": "Default-enabled high-signal institutional source."
+  "accessNote": "Default-enabled high-signal institutional source.",
+  "knownArticleIndexUrls": [
+    "https://www.morganstanley.com/ideas"
+  ],
+  "allowedPathPatterns": [
+    "/ideas",
+    "/insights",
+    "/articles"
+  ],
+  "blockedPathPatterns": [
+    "/press-release",
+    "/press-releases",
+    "/about",
+    "/careers",
+    "/funds",
+    "/etf"
+  ]
 }

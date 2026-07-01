@@ -12,5 +12,6 @@
   "parserType": "generic",
   "qualityScore": 7,
   "sitemapUrl": "https://lazardassetmanagement.com/sitemap.xml",
-  "accessNote": "Available in the canonical registry but disabled by default; enable when you want this source scanned."
+  "accessNote": "Disabled: no public article feed discovered.",
+  "sourceNeedsUrlPattern": true
 }

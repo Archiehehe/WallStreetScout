@@ -31,6 +31,7 @@ interface DiagnosticsData {
     articlesRejected: number
     articlesFailed: number
     commonRejectionReasons: Array<{ reason: string; count: number }>
+    skippedBreakdown?: Array<{ reason: string; count: number; exampleSource: string; exampleUrl: string }>
     rejectionBreakdown?: Array<{ category: string; count: number; exampleSource: string; exampleUrl: string; pageType: string }>
     failureBreakdown?: Array<{ error: string; count: number; exampleSource: string; exampleUrl: string; httpStatus?: number }>
     discoveryMethodBreakdown?: Array<{ method: string; count: number }>
@@ -95,6 +96,7 @@ export default function DiagnosticsPage() {
   const scan = data.scanSummary
   const rejectionBreakdown = scan.rejectionBreakdown ?? []
   const failureBreakdown = scan.failureBreakdown ?? []
+  const skippedBreakdown = scan.skippedBreakdown ?? []
   const discoveryMethodBreakdown = scan.discoveryMethodBreakdown ?? []
   const scanUrlResults = data.scanUrlResults ?? []
 
@@ -175,6 +177,36 @@ export default function DiagnosticsPage() {
       </Card>
 
       <Card>
+        <CardHeader><CardTitle className="text-sm">Skipped Before Fetch</CardTitle></CardHeader>
+        <CardContent>
+          {skippedBreakdown.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No skipped URL data available yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Reason</TableHead>
+                  <TableHead>Count</TableHead>
+                  <TableHead>Example Source</TableHead>
+                  <TableHead>Example URL</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {skippedBreakdown.map((item) => (
+                  <TableRow key={item.reason}>
+                    <TableCell className="text-xs font-medium">{item.reason}</TableCell>
+                    <TableCell className="text-xs">{item.count}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{item.exampleSource}</TableCell>
+                    <TableCell className="max-w-[200px] truncate text-xs text-muted-foreground" title={item.exampleUrl}>{item.exampleUrl}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader><CardTitle className="text-sm">Failure Breakdown</CardTitle></CardHeader>
         <CardContent>
           {failureBreakdown.length === 0 ? (
@@ -237,6 +269,7 @@ export default function DiagnosticsPage() {
               <option value="rejected">Rejected</option>
               <option value="failed">Failed</option>
               <option value="skipped_seen">Skipped (duplicate)</option>
+              <option value="skipped_url_filter">Skipped (URL filter)</option>
             </select>
             <select
               className="rounded border border-[#1F1F1F] bg-[#0A0A0A] px-2 py-1 text-xs text-[#E5E7EB]"

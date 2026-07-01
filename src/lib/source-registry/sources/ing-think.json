@@ -4,13 +4,19 @@
   "domain": "think.ing.com",
   "sourceType": "primary",
   "sourceClass": "primary_institutional",
-  "enabled": false,
-  "defaultEnabled": false,
+  "enabled": true,
+  "defaultEnabled": true,
   "strictEvidenceRequired": true,
   "allowTickerlessThemePieces": false,
   "category": "bank_research",
   "parserType": "generic",
   "qualityScore": 7,
   "sitemapUrl": "https://think.ing.com/sitemap.xml",
-  "accessNote": "Available in the canonical registry but disabled by default; enable when you want this source scanned."
+  "accessNote": "Available in the canonical registry but disabled by default; enable when you want this source scanned.",
+  "knownArticleIndexUrls": [
+    "https://think.ing.com"
+  ],
+  "allowedPathPatterns": [
+    "/en/think"
+  ]
 }

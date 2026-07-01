@@ -12,5 +12,17 @@
   "parserType": "generic",
   "qualityScore": 9,
   "sitemapUrl": "https://apollo.com/sitemap.xml",
-  "accessNote": "Default-enabled high-signal institutional source."
+  "accessNote": "Default-enabled high-signal institutional source.",
+  "knownArticleIndexUrls": [
+    "https://www.apollo.com/insights-news"
+  ],
+  "allowedPathPatterns": [
+    "/insights-news",
+    "/insights"
+  ],
+  "blockedPathPatterns": [
+    "/about",
+    "/careers",
+    "/strategies"
+  ]
 }

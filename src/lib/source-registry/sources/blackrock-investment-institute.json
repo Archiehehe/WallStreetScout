@@ -12,5 +12,19 @@
   "parserType": "generic",
   "qualityScore": 9,
   "sitemapUrl": "https://blackrock.com/sitemap.xml",
-  "accessNote": "Default-enabled high-signal institutional source."
+  "accessNote": "Default-enabled high-signal institutional source.",
+  "knownArticleIndexUrls": [
+    "https://www.blackrock.com/us/individual/insights/black-rock-investment-institute"
+  ],
+  "allowedPathPatterns": [
+    "/insights"
+  ],
+  "blockedPathPatterns": [
+    "/funds",
+    "/products",
+    "/etf",
+    "/resources",
+    "/careers"
+  ],
+  "preferredDiscoveryMethod": "rss"
 }

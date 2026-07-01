@@ -12,5 +12,12 @@
   "parserType": "generic",
   "qualityScore": 9,
   "sitemapUrl": "https://ubs.com/sitemap.xml",
-  "accessNote": "Default-enabled high-signal institutional source."
+  "accessNote": "Default-enabled high-signal institutional source.",
+  "knownArticleIndexUrls": [
+    "https://www.ubs.com/global/en/investment-bank/in-focus.html"
+  ],
+  "allowedPathPatterns": [
+    "/investment-bank/in-focus",
+    "/global/en/wealth-management/insights"
+  ]
 }

@@ -12,5 +12,6 @@
   "parserType": "generic",
   "qualityScore": 7,
   "sitemapUrl": "https://hamiltonlane.com/sitemap.xml",
-  "accessNote": "Available in the canonical registry but disabled by default; enable when you want this source scanned."
+  "accessNote": "Disabled: only product/solution pages discovered.",
+  "sourceNeedsUrlPattern": true
 }

@@ -36,6 +36,8 @@ alter table sources add column if not exists access_note text;
 alter table sources add column if not exists allowed_path_patterns text[] default '{}';
 alter table sources add column if not exists blocked_path_patterns text[] default '{}';
 alter table sources add column if not exists preferred_discovery_method text;
+alter table sources add column if not exists known_article_index_urls text[] default '{}';
+alter table sources add column if not exists source_needs_url_pattern boolean default false;
 
 create unique index if not exists idx_sources_domain_unique on sources (lower(domain));
 

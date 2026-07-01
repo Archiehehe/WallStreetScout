@@ -12,5 +12,17 @@
   "parserType": "generic",
   "qualityScore": 9,
   "sitemapUrl": "https://franklintempleton.com/sitemap.xml",
-  "accessNote": "Default-enabled high-signal institutional source."
+  "accessNote": "Default-enabled high-signal institutional source.",
+  "knownArticleIndexUrls": [
+    "https://www.franklintempleton.com/insights"
+  ],
+  "allowedPathPatterns": [
+    "/insights"
+  ],
+  "blockedPathPatterns": [
+    "/products",
+    "/funds",
+    "/resources",
+    "/about"
+  ]
 }

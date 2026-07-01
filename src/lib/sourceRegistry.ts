@@ -14,6 +14,8 @@ export interface SourceRegistryEntry extends Omit<Source, 'id' | 'createdAt' | '
   allowedPathPatterns?: string[]
   blockedPathPatterns?: string[]
   preferredDiscoveryMethod?: string
+  knownArticleIndexUrls?: string[]
+  sourceNeedsUrlPattern?: boolean
 }
 
 export const CORE_DOMAINS = new Set([
@@ -111,9 +113,8 @@ export function toStarterSource(source: SourceRegistryEntry): Omit<Source, 'id' 
     allowTickerlessThemePieces: source.allowTickerlessThemePieces,
     category: source.category,
     accessNote: source.accessNote,
-    allowedPathPatterns: source.allowedPathPatterns,
-    blockedPathPatterns: source.blockedPathPatterns,
-    preferredDiscoveryMethod: source.preferredDiscoveryMethod,
+    knownArticleIndexUrls: source.knownArticleIndexUrls,
+    sourceNeedsUrlPattern: source.sourceNeedsUrlPattern,
     qualityScore: source.qualityScore,
     notes: source.notes,
   }

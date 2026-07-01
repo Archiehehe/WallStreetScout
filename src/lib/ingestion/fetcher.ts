@@ -1,5 +1,6 @@
 import type { Source } from '@/lib/storage/types'
 import { safeNormalizeUrl } from './url'
+import { isSitemapUrl, fetchAndParseSitemap } from './sitemap'
 
 interface FetchedUrl {
   url: string
@@ -36,9 +37,25 @@ export async function fetchUrlsFromSource(source: Source): Promise<FetchedUrl[]>
     }
   }
 
+  const expanded: FetchedUrl[] = []
+  for (const item of urls) {
+    if (isSitemapUrl(item.url)) {
+      try {
+        const childUrls = await fetchAndParseSitemap(item.url)
+        for (const cu of childUrls) {
+          const normal = safeNormalizeUrl(cu)
+          if (normal) {
+            expanded.push({ url: normal, sourceId: source.id, urlDiscoveryMethod: 'sitemap' })
+          }
+        }
+      } catch {
+      }
+    } else {
+      expanded.push(item)
+    }
+  }
 
-
-  return prioritizeFetchedUrls(urls)
+  return prioritizeFetchedUrls(expanded)
 }
 
 export async function fetchRss(rssUrl: string, sourceId: string): Promise<FetchedUrl[]> {

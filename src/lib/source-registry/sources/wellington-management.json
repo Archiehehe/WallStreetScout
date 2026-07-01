@@ -12,5 +12,6 @@
   "parserType": "generic",
   "qualityScore": 7,
   "sitemapUrl": "https://wellington.com/sitemap.xml",
-  "accessNote": "Available in the canonical registry but disabled by default; enable when you want this source scanned."
+  "accessNote": "Disabled: needs a known article index URL to be configured.",
+  "sourceNeedsUrlPattern": true
 }

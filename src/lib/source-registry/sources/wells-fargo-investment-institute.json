@@ -4,13 +4,19 @@
   "domain": "wellsfargo.com",
   "sourceType": "primary",
   "sourceClass": "primary_institutional",
-  "enabled": false,
-  "defaultEnabled": false,
+  "enabled": true,
+  "defaultEnabled": true,
   "strictEvidenceRequired": true,
   "allowTickerlessThemePieces": false,
   "category": "wealth_research",
   "parserType": "generic",
   "qualityScore": 7,
   "sitemapUrl": "https://wellsfargo.com/sitemap.xml",
-  "accessNote": "Available in the canonical registry but disabled by default; enable when you want this source scanned."
+  "accessNote": "Available in the canonical registry but disabled by default; enable when you want this source scanned.",
+  "knownArticleIndexUrls": [
+    "https://www.wellsfargo.com/insights"
+  ],
+  "allowedPathPatterns": [
+    "/insights"
+  ]
 }

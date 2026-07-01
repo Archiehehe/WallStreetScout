@@ -44,9 +44,24 @@ export async function GET() {
     let rejectionBreakdown: BreakdownItem[] = []
     let failureBreakdown: BreakdownItem[] = []
     let discoveryMethodBreakdown: MethodBreakdownItem[] = []
+    let skippedBreakdown: (BreakdownItem & { reason?: string })[] = []
     if (latestScanRunId) {
       try {
         scanUrlResults = await store.getScanUrlResults(latestScanRunId)
+        // Build skipped breakdown
+        const skipMap = new Map<string, { count: number; exampleSource: string; exampleUrl: string }>()
+        for (const r of scanUrlResults) {
+          if (r.status === 'skipped_url_filter' && r.rejectionCategory) {
+            const cat = r.rejectionCategory
+            const existing = skipMap.get(cat) ?? { count: 0, exampleSource: '', exampleUrl: '' }
+            existing.count++
+            if (!existing.exampleSource) existing.exampleSource = r.sourceName ?? r.sourceDomain ?? ''
+            if (!existing.exampleUrl) existing.exampleUrl = r.url
+            skipMap.set(cat, existing)
+          }
+        }
+        skippedBreakdown = Array.from(skipMap.entries()).map(([reason, data]) => ({ reason, ...data })).sort((a, b) => b.count - a.count)
+
         // Build rejection breakdown
         const rejectMap = new Map<string, { count: number; exampleSource: string; exampleUrl: string; rawExtractedTickers: string[]; screenableTickers: string[]; pageType: string }>()
         for (const r of scanUrlResults) {
@@ -107,6 +122,7 @@ export async function GET() {
         articlesRejected: scanRows.reduce((sum, scan) => sum + scan.rejectedCount, 0),
         articlesFailed: scanRows.reduce((sum, scan) => sum + scan.failedCount, 0),
         commonRejectionReasons: rejectionReasons,
+        skippedBreakdown,
         rejectionBreakdown,
         failureBreakdown,
         discoveryMethodBreakdown,

@@ -2,6 +2,7 @@ import { getStore } from '@/lib/storage'
 import { getEnabledSources } from './sources'
 import { fetchUrlsFromSource } from './fetcher'
 import { submitArticleUrl } from './submitArticle'
+import { isArticleCandidateUrl } from './urlFilter'
 
 export interface ScanResult {
   scanRunId: string
@@ -14,6 +15,8 @@ export interface ScanResult {
   totalSaved: number
   totalRejected: number
   totalFailed: number
+  totalSkipped: number
+  skippedBreakdown: Record<string, number>
   errors: string[]
   results: ScanItemResult[]
   message?: string
@@ -75,6 +78,8 @@ export async function runScan(): Promise<ScanResult> {
       totalSaved: 0,
       totalRejected: 0,
       totalFailed: 0,
+      totalSkipped: 0,
+      skippedBreakdown: {},
       results: [],
       message: 'No enabled sources configured.',
       sourceCapApplied: false,
@@ -98,9 +103,39 @@ export async function runScan(): Promise<ScanResult> {
     }
   })
 
-  const fetchedItems = sourceResults
+  const allItems = sourceResults
     .flatMap((result) => result.urls.map((url) => ({ source: result.source, fetched: url })))
-    .slice(0, maxTotalUrls)
+
+  const filtered: typeof allItems = []
+  const skipped: { item: (typeof allItems)[number]; reason: string }[] = []
+  for (const item of allItems) {
+    const check = isArticleCandidateUrl(item.fetched.url, item.source)
+    if (check.ok) {
+      filtered.push(item)
+    } else {
+      skipped.push({ item, reason: check.reason })
+    }
+  }
+
+  const fetchedItems = filtered.slice(0, maxTotalUrls)
+  const skippedItems = skipped.slice(0, maxTotalUrls)
+
+  for (const { item, reason } of skippedItems) {
+    await store.createScanUrlResult({
+      scanRunId: scanRun.id,
+      sourceId: item.source.id,
+      sourceName: item.source.name,
+      sourceDomain: item.source.domain,
+      url: item.fetched.url,
+      normalizedUrl: item.fetched.url,
+      urlDiscoveryMethod: item.fetched.urlDiscoveryMethod ?? 'unknown',
+      status: 'skipped_url_filter',
+      rejectionCategory: reason,
+      rejectionReason: reason,
+      rawExtractedTickers: [],
+      screenableTickers: [],
+    }).catch(() => {})
+  }
 
   const itemResults = await runBatched(fetchedItems, concurrency, async ({ source, fetched }) => {
     const urlResult = {
@@ -197,6 +232,11 @@ export async function runScan(): Promise<ScanResult> {
       error: result.error,
     }))
 
+  const skippedBreakdown: Record<string, number> = {}
+  for (const { reason } of skippedItems) {
+    skippedBreakdown[reason] = (skippedBreakdown[reason] ?? 0) + 1
+  }
+
   const results = [...sourceFailures, ...itemResults]
   const totalSaved = itemResults.filter((result) => result.saved).length
   const totalRejected = itemResults.filter((result) => result.rejected).length
@@ -256,7 +296,7 @@ export async function runScan(): Promise<ScanResult> {
   return {
     scanRunId: scanRun.id,
     sourcesChecked: sources.length,
-    urlsFound: fetchedItems.length,
+    urlsFound: allItems.length,
     articlesParsed: totalParsed,
     articlesSaved: totalSaved,
     totalFetched: itemResults.length,
@@ -264,6 +304,8 @@ export async function runScan(): Promise<ScanResult> {
     totalSaved,
     totalRejected,
     totalFailed,
+    totalSkipped: skippedItems.length,
+    skippedBreakdown,
     errors,
     results,
     message: sourceCapApplied ? `Scanned first ${sources.length} of ${allEnabledSources.length} enabled sources.` : undefined,

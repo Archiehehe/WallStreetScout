@@ -4,13 +4,14 @@
   "domain": "ssga.com",
   "sourceType": "primary",
   "sourceClass": "primary_institutional",
-  "enabled": true,
-  "defaultEnabled": true,
+  "enabled": false,
+  "defaultEnabled": false,
   "strictEvidenceRequired": true,
   "allowTickerlessThemePieces": false,
   "category": "asset_manager",
   "parserType": "generic",
-  "qualityScore": 9,
+  "qualityScore": 5,
   "sitemapUrl": "https://ssga.com/sitemap.xml",
-  "accessNote": "Default-enabled high-signal institutional source."
+  "accessNote": "Disabled: no public article feed discovered. Only product/ETF pages found.",
+  "sourceNeedsUrlPattern": true
 }
