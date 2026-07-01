@@ -282,8 +282,8 @@ create table if not exists scan_url_results (
   rejection_category text,
   rejection_reason text,
   page_type text,
-  raw_extracted_tickers text[] default '{}',
-  screenable_tickers text[] default '{}',
+  raw_extracted_tickers jsonb default '[]'::jsonb,
+  screenable_tickers jsonb default '[]'::jsonb,
   preview_quality text,
   error text,
   created_at timestamptz default now()
