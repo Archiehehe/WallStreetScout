@@ -1,8 +1,8 @@
 import { getStore } from '@/lib/storage'
 import { getEnabledSources } from './sources'
-import { fetchUrlsFromSource } from './fetcher'
 import { submitArticleUrl } from './submitArticle'
 import { isArticleCandidateUrl } from './urlFilter'
+import { getParserForSource } from '@/lib/sourceParsers'
 
 export interface ScanResult {
   scanRunId: string
@@ -91,7 +91,8 @@ export async function runScan(): Promise<ScanResult> {
 
   const sourceResults = await runBatched(sources, concurrency, async (source) => {
     try {
-      const urls = await fetchUrlsFromSource(source)
+      const parser = getParserForSource(source)
+      const urls = await parser.discoverArticleUrls(source)
       return { ok: true as const, source, urls }
     } catch (error) {
       return {

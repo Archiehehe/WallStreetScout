@@ -9,10 +9,11 @@
   "strictEvidenceRequired": true,
   "allowTickerlessThemePieces": false,
   "category": "asset_manager",
-  "parserType": "generic",
+  "parserType": "dedicated",
+  "parserKey": "capitalGroup",
   "qualityScore": 7,
   "sitemapUrl": "https://capitalgroup.com/sitemap.xml",
-  "accessNote": "Available in the canonical registry but disabled by default; enable when you want this source scanned.",
+  "accessNote": "Default-enabled with dedicated parser via sitemap filtering.",
   "knownArticleIndexUrls": [
     "https://www.capitalgroup.com/insights"
   ],

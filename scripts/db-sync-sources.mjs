@@ -18,81 +18,24 @@ const sources = await Promise.all(
 )
 
 const CORE_DOMAINS = new Set([
-  'goldmansachs.com',
   'morganstanley.com',
-  'jpmorgan.com',
+  'goldmansachs.com',
   'privatebank.jpmorgan.com',
   'ubs.com',
   'privatebank.bankofamerica.com',
-  'dbresearch.com',
-  'sc.com',
-  'think.ing.com',
-  'wellsfargo.com',
-  'blackrock.com',
-  'pimco.com',
-  'vanguard.com',
   'schwab.com',
   'fidelity.com',
   'troweprice.com',
   'capitalgroup.com',
-  'franklintempleton.com',
-  'invesco.com',
-  'ssga.com',
   'wellington.com',
-  'aqr.com',
-  'researchaffiliates.com',
-  'gmo.com',
-  'amundi.com',
-  'schroders.com',
-  'apollo.com',
-  'kkr.com',
-  'aresmgmt.com',
-  'oaktreecapital.com',
-  'brookfield.com',
-  'carlyle.com',
-  'blueowl.com',
-  'hamiltonlane.com',
-  'bridgewater.com',
-  'man.com',
-  'twosigma.com',
-  'janestreet.com',
-  'lazardassetmanagement.com',
-  'northerntrust.com',
+  'blackrock.com',
+  'franklintempleton.com',
 ])
-
-const MEDIA_BLACKLIST = new Set([
-  'cnbc.com',
-  'benzinga.com',
-  'seekingalpha.com',
-  'finance.yahoo.com',
-  'yahoo.com',
-  'marketwatch.com',
-  'reuters.com',
-  'investing.com',
-  'tipranks.com',
-  'thefly.com',
-  'stockanalysis.com',
-  'marketbeat.com',
-  'streetinsider.com',
-  'gurufocus.com',
-])
-
-// Delete media sources from the DB
-for (const blockedDomain of MEDIA_BLACKLIST) {
-  await sql`
-    delete from sources
-    where lower(domain) = ${blockedDomain}
-       or lower(domain) like ${`%.${blockedDomain}`}
-  `
-}
 
 const syncedDomains = new Set()
 const coreDomainsSynced = new Set()
 for (const source of sources) {
   const domainLower = source.domain.toLowerCase()
-  
-  // Skip media sources completely
-  if (isMediaDomain(domainLower)) continue
 
   const isCore = CORE_DOMAINS.has(domainLower)
   const tier = isCore ? 'core' : 'secondary'
@@ -114,6 +57,8 @@ for (const source of sources) {
       rss_url,
       sitemap_url,
       parser_type,
+      parser_key,
+      requires_dedicated_parser,
       enabled,
       default_enabled,
       strict_evidence_required,
@@ -138,6 +83,8 @@ for (const source of sources) {
       ${source.rssUrl ?? null},
       ${source.sitemapUrl ?? null},
       ${source.parserType ?? 'generic'},
+      ${source.parserKey ?? null},
+      ${source.requiresDedicatedParser ?? false},
       ${shouldBeEnabled},
       ${shouldBeEnabled},
       ${source.strictEvidenceRequired ?? true},
@@ -162,6 +109,8 @@ for (const source of sources) {
       rss_url = excluded.rss_url,
       sitemap_url = excluded.sitemap_url,
       parser_type = excluded.parser_type,
+      parser_key = excluded.parser_key,
+      requires_dedicated_parser = excluded.requires_dedicated_parser,
       enabled = excluded.enabled,
       default_enabled = excluded.default_enabled,
       strict_evidence_required = excluded.strict_evidence_required,
@@ -183,7 +132,7 @@ await sql`
   update sources
   set enabled = false,
       default_enabled = false,
-      source_tier = case when source_tier = 'archive' then 'archive' else 'secondary' end,
+      source_tier = 'secondary',
       updated_at = now()
   where lower(domain) <> all(${Array.from(CORE_DOMAINS)})
 `
@@ -193,12 +142,6 @@ const [coreEnabled] = await sql`
   from sources
   where enabled = true and source_tier = 'core'
 `
-const mediaEnabled = await sql`
-  select name, domain
-  from sources
-  where enabled = true
-`
-const enabledMediaRows = mediaEnabled.filter((row) => isMediaDomain(String(row.domain).toLowerCase()))
 const duplicateRows = await sql`
   select lower(domain) as domain, count(*)::int as count
   from sources
@@ -206,30 +149,31 @@ const duplicateRows = await sql`
   having count(*) > 1
 `
 const coreRows = await sql`
-  select name, domain, enabled
+  select name, domain, enabled, parser_key, parser_type
   from sources
   where lower(domain) = any(${Array.from(CORE_DOMAINS)})
   order by name
 `
 const enabledCoreDomains = new Set(coreRows.filter((row) => row.enabled).map((row) => String(row.domain).toLowerCase()))
 const missingCoreDomains = Array.from(CORE_DOMAINS).filter((domain) => !enabledCoreDomains.has(domain))
+const enabledWithoutParser = coreRows.filter((row) => row.enabled && !row.parser_key && row.parser_type !== 'dedicated')
 
 console.log(`Synced ${syncedDomains.size} institutional source domains (${coreDomainsSynced.size} core registry domains).`)
-console.log(`Expected core enabled sources: ${CORE_DOMAINS.size}`)
+console.log(`Expected default-enabled sources: ${CORE_DOMAINS.size}`)
 console.log(`Actual core enabled sources: ${Number(coreEnabled.count)}`)
-console.log(`Media/news enabled sources: ${enabledMediaRows.length}`)
 console.log(`Duplicate domains: ${duplicateRows.length}`)
 
 if (missingCoreDomains.length > 0) {
   console.log(`Missing/disabled core domains: ${missingCoreDomains.join(', ')}`)
 }
 
-if (Number(coreEnabled.count) !== CORE_DOMAINS.size || enabledMediaRows.length > 0 || duplicateRows.length > 0) {
-  process.exitCode = 1
+if (enabledWithoutParser.length > 0) {
+  console.log(`WARNING: Enabled sources without dedicated parser:`)
+  for (const row of enabledWithoutParser) {
+    console.log(`  - ${row.name} (${row.domain}) parser_type=${row.parser_type} parser_key=${row.parser_key ?? 'null'}`)
+  }
 }
 
-function isMediaDomain(domain) {
-  return Array.from(MEDIA_BLACKLIST).some((blocked) => (
-    domain === blocked || domain.endsWith(`.${blocked}`)
-  ))
+if (Number(coreEnabled.count) !== CORE_DOMAINS.size || duplicateRows.length > 0) {
+  process.exitCode = 1
 }

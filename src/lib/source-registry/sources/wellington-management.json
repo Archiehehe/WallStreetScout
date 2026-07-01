@@ -4,14 +4,17 @@
   "domain": "wellington.com",
   "sourceType": "primary",
   "sourceClass": "primary_institutional",
-  "enabled": false,
-  "defaultEnabled": false,
+  "enabled": true,
+  "defaultEnabled": true,
   "strictEvidenceRequired": true,
   "allowTickerlessThemePieces": false,
   "category": "asset_manager",
-  "parserType": "generic",
+  "parserType": "dedicated",
+  "parserKey": "wellington",
   "qualityScore": 7,
   "sitemapUrl": "https://wellington.com/sitemap.xml",
-  "accessNote": "Disabled: needs a known article index URL to be configured.",
-  "sourceNeedsUrlPattern": true
+  "accessNote": "Default-enabled with dedicated parser via sitemap filtering.",
+  "allowedPathPatterns": [
+    "/insights"
+  ]
 }

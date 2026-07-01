@@ -4,13 +4,14 @@
   "domain": "troweprice.com",
   "sourceType": "primary",
   "sourceClass": "primary_institutional",
-  "enabled": false,
+  "enabled": true,
   "defaultEnabled": true,
   "strictEvidenceRequired": true,
   "allowTickerlessThemePieces": false,
   "category": "asset_manager",
-  "parserType": "generic",
+  "parserType": "dedicated",
+  "parserKey": "tRowePrice",
   "qualityScore": 9,
   "sitemapUrl": "https://troweprice.com/sitemap.xml",
-  "accessNote": "Disabled: only sitemap XML files discovered, no public article RSS/feed."
+  "accessNote": "Default-enabled with dedicated parser via sitemap filtering."
 }

@@ -19,6 +19,8 @@ export interface Source {
   preferredDiscoveryMethod?: string
   knownArticleIndexUrls?: string[]
   sourceNeedsUrlPattern?: boolean
+  parserKey?: string
+  requiresDedicatedParser?: boolean
   qualityScore: number
   notes?: string
   createdAt: string

@@ -1,5 +1,6 @@
 import { SOURCE_MODULES } from '@/lib/source-registry/sources'
 import type { Source } from '@/lib/storage/types'
+import { isDisallowedMediaDomain } from '@/lib/safety/disallowedDomains'
 
 export type SourceClass = 'primary_institutional' | 'public_institutional_research' | 'manual'
 
@@ -16,81 +17,36 @@ export interface SourceRegistryEntry extends Omit<Source, 'id' | 'createdAt' | '
   preferredDiscoveryMethod?: string
   knownArticleIndexUrls?: string[]
   sourceNeedsUrlPattern?: boolean
+  parserKey?: string
+  requiresDedicatedParser?: boolean
 }
 
 export const CORE_DOMAINS = new Set([
-  'goldmansachs.com',
   'morganstanley.com',
-  'jpmorgan.com',
+  'goldmansachs.com',
   'privatebank.jpmorgan.com',
   'ubs.com',
   'privatebank.bankofamerica.com',
-  'dbresearch.com',
-  'sc.com',
-  'think.ing.com',
-  'wellsfargo.com',
-  'blackrock.com',
-  'pimco.com',
-  'vanguard.com',
   'schwab.com',
   'fidelity.com',
   'troweprice.com',
   'capitalgroup.com',
-  'franklintempleton.com',
-  'invesco.com',
-  'ssga.com',
   'wellington.com',
-  'aqr.com',
-  'researchaffiliates.com',
-  'gmo.com',
-  'amundi.com',
-  'schroders.com',
-  'apollo.com',
-  'kkr.com',
-  'aresmgmt.com',
-  'oaktreecapital.com',
-  'brookfield.com',
-  'carlyle.com',
-  'blueowl.com',
-  'hamiltonlane.com',
-  'bridgewater.com',
-  'man.com',
-  'twosigma.com',
-  'janestreet.com',
-  'lazardassetmanagement.com',
-  'northerntrust.com',
-])
-
-export const MEDIA_BLACKLIST = new Set([
-  'cnbc.com',
-  'benzinga.com',
-  'seekingalpha.com',
-  'finance.yahoo.com',
-  'yahoo.com',
-  'marketwatch.com',
-  'reuters.com',
-  'investing.com',
-  'tipranks.com',
-  'thefly.com',
-  'stockanalysis.com',
-  'marketbeat.com',
-  'streetinsider.com',
-  'gurufocus.com',
+  'blackrock.com',
+  'franklintempleton.com',
 ])
 
 export const SOURCE_REGISTRY = SOURCE_MODULES as SourceRegistryEntry[]
 
 export const DEFAULT_ENABLED_SOURCE_REGISTRY = SOURCE_REGISTRY.filter((source) => {
   const domainLower = source.domain.toLowerCase()
-  const isCore = CORE_DOMAINS.has(domainLower)
-  const isMedia = isMediaDomain(domainLower)
-  return isCore && !isMedia
+  return CORE_DOMAINS.has(domainLower)
 })
 
 export function toStarterSource(source: SourceRegistryEntry): Omit<Source, 'id' | 'createdAt' | 'updatedAt'> {
   const domainLower = source.domain.toLowerCase()
   const isCore = CORE_DOMAINS.has(domainLower)
-  const isMedia = isMediaDomain(domainLower)
+  const isMedia = isDisallowedMediaDomain(domainLower)
 
   const tier = isMedia ? 'archive' : (isCore ? 'core' : 'secondary')
   const shouldBeEnabled = isCore && !isMedia
@@ -107,6 +63,8 @@ export function toStarterSource(source: SourceRegistryEntry): Omit<Source, 'id' 
     rssUrl: source.rssUrl,
     sitemapUrl: source.sitemapUrl,
     parserType: source.parserType ?? 'generic',
+    parserKey: source.parserKey,
+    requiresDedicatedParser: source.requiresDedicatedParser,
     enabled: shouldBeEnabled,
     defaultEnabled: shouldBeEnabled,
     strictEvidenceRequired: source.strictEvidenceRequired,
@@ -121,8 +79,5 @@ export function toStarterSource(source: SourceRegistryEntry): Omit<Source, 'id' 
 }
 
 export function isMediaDomain(domain: string): boolean {
-  const normalized = domain.toLowerCase()
-  return Array.from(MEDIA_BLACKLIST).some((blocked) => (
-    normalized === blocked || normalized.endsWith(`.${blocked}`)
-  ))
+  return isDisallowedMediaDomain(domain)
 }

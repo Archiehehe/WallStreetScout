@@ -1,6 +1,8 @@
 import { getStore } from '@/lib/storage'
 import { handleApiError } from '@/lib/api/responses'
 import type { ScanUrlResult } from '@/lib/storage/types'
+import { parserExistsForKey, getAllParserKeys } from '@/lib/sourceParsers'
+import { CORE_DOMAINS } from '@/lib/sourceRegistry'
 
 interface BreakdownItem {
   count: number
@@ -103,12 +105,24 @@ export async function GET() {
       }
     }
 
+    const parserCoverage = sources.map((source) => ({
+      name: source.name,
+      domain: source.domain,
+      parserKey: source.parserKey ?? null,
+      parserExists: parserExistsForKey(source.parserKey),
+      enabled: source.enabled,
+      sourceTier: source.sourceTier ?? 'secondary',
+    }))
+
     return Response.json({
       sources: {
         total: sources.length,
         enabled: enabledSources.length,
         enabledCore: enabledSources.filter((source) => source.sourceTier === 'core').length,
         enabledMedia: enabledSources.filter((source) => isMediaSource(source.name, source.domain)).length,
+        expectedCore: CORE_DOMAINS.size,
+        parserCoverage,
+        registeredParsers: getAllParserKeys().length,
       },
       latestScanRun,
       scanSummary: {

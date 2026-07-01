@@ -10,7 +10,8 @@
   "strictEvidenceRequired": true,
   "allowTickerlessThemePieces": false,
   "category": "bank_research",
-  "parserType": "generic",
+  "parserType": "dedicated",
+  "parserKey": "bofaPrivateBank",
   "qualityScore": 9,
   "sitemapUrl": "https://privatebank.bankofamerica.com/sitemap.xml",
   "accessNote": "Core institutional source."

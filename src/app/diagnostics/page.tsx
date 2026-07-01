@@ -9,8 +9,17 @@ import { LoadingState } from '@/components/LoadingState'
 import { ErrorState } from '@/components/ErrorState'
 import { Activity, RefreshCw } from 'lucide-react'
 
+interface ParserCoverageItem {
+  name: string
+  domain: string
+  parserKey: string | null
+  parserExists: boolean
+  enabled: boolean
+  sourceTier: string
+}
+
 interface DiagnosticsData {
-  sources: { total: number; enabled: number; enabledCore: number; enabledMedia: number }
+  sources: { total: number; enabled: number; enabledCore: number; enabledMedia: number; expectedCore: number; parserCoverage: ParserCoverageItem[]; registeredParsers: number }
   latestScanRun?: {
     id: string
     startedAt?: string
@@ -120,12 +129,46 @@ export default function DiagnosticsPage() {
         </Button>
       </div>
 
-      <div className="grid gap-2 md:grid-cols-4">
+      <div className="grid gap-2 md:grid-cols-5">
         <SummaryCell label="Enabled sources" value={String(data.sources.enabled)} />
-        <SummaryCell label="Core enabled" value={`${data.sources.enabledCore}/40`} />
+        <SummaryCell label="Core enabled" value={`${data.sources.enabledCore}/${data.sources.expectedCore}`} />
+        <SummaryCell label="Parsers registered" value={String(data.sources.registeredParsers)} />
         <SummaryCell label="URLs found" value={String(scan.urlsFound)} />
         <SummaryCell label="Rejected" value={String(scan.articlesRejected)} />
       </div>
+
+      <Card>
+        <CardHeader><CardTitle className="text-sm">Parser Coverage</CardTitle></CardHeader>
+        <CardContent className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Source</TableHead>
+                <TableHead>Domain</TableHead>
+                <TableHead>Parser Key</TableHead>
+                <TableHead>Parser Exists</TableHead>
+                <TableHead>Enabled</TableHead>
+                <TableHead>Tier</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.sources.parserCoverage
+                .filter((s) => s.sourceTier === 'core' || s.parserKey)
+                .sort((a, b) => (a.enabled === b.enabled ? 0 : a.enabled ? -1 : 1))
+                .map((s) => (
+                  <TableRow key={s.domain}>
+                    <TableCell className="text-xs font-medium">{s.name}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{s.domain}</TableCell>
+                    <TableCell className="text-xs">{s.parserKey ?? 'none'}</TableCell>
+                    <TableCell>{s.parserExists ? <Badge className="bg-green-700 text-xs">Yes</Badge> : <Badge variant="destructive" className="text-xs">No</Badge>}</TableCell>
+                    <TableCell>{s.enabled ? <Badge variant="outline" className="text-xs bg-blue-900">Yes</Badge> : <Badge variant="secondary" className="text-xs">No</Badge>}</TableCell>
+                    <TableCell><Badge variant="outline" className="text-xs">{s.sourceTier}</Badge></TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

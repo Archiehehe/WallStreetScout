@@ -145,6 +145,41 @@ function prioritizeFetchedUrls(urls: FetchedUrl[]): FetchedUrl[] {
   return prioritized.slice(0, Math.max(1, maxUrls))
 }
 
+export interface FetchContentResult {
+  html?: string
+  title?: string
+  rawText?: string
+  error?: string
+}
+
+export async function fetchUrlContent(url: string): Promise<FetchContentResult> {
+  try {
+    const html = await fetchArticleHtml(url)
+    const title = extractTitle(html)
+    const rawText = stripHtml(html)
+    return { html, title, rawText }
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : String(error) }
+  }
+}
+
+function extractTitle(html: string): string | undefined {
+  const match = html.match(/<title[^>]*>([^<]*)<\/title>/i)
+  return match ? match[1].trim() : undefined
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
+    .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
+    .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 export async function fetchArticleHtml(url: string): Promise<string> {
   const response = await timedFetch(url, {
     headers: { 'User-Agent': 'InstitutionalIdeaFeed/1.0' },

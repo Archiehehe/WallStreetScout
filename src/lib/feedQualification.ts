@@ -1,6 +1,7 @@
 import type { Article, ArticleExtraction, PageType, RejectionCategory, Source } from '@/lib/storage/types'
 import type { ExtractionResult } from '@/lib/ingestion/extractor'
 import { getValidatedScreenableTickers, isScreenableEquityTicker } from '@/lib/utils/screenableTicker'
+import { MEDIA_DOMAINS, MEDIA_SOURCE_PATTERNS } from '@/lib/safety/disallowedDomains'
 
 export type FeedQualificationArticle = Pick<Article, 'title' | 'url'> & {
   cleanedText?: string
@@ -25,40 +26,6 @@ export const ELIGIBLE_FEED_PAGE_TYPES: PageType[] = [
   'sector_or_theme_research',
   'stock_basket_research',
   'manager_commentary',
-]
-
-const MEDIA_SOURCE_PATTERNS = [
-  'cnbc',
-  'benzinga',
-  'seeking alpha',
-  'seekingalpha',
-  'yahoo finance',
-  'marketwatch',
-  'reuters',
-  'investing.com',
-  'tipranks',
-  'the fly',
-  'stockanalysis',
-  'marketbeat',
-  'streetinsider',
-  'gurufocus',
-]
-
-const MEDIA_DOMAINS = [
-  'cnbc.com',
-  'benzinga.com',
-  'seekingalpha.com',
-  'finance.yahoo.com',
-  'yahoo.com',
-  'marketwatch.com',
-  'reuters.com',
-  'investing.com',
-  'tipranks.com',
-  'thefly.com',
-  'stockanalysis.com',
-  'marketbeat.com',
-  'streetinsider.com',
-  'gurufocus.com',
 ]
 
 const TITLE_REJECT_RULES: Array<{ pattern: RegExp; pageType: PageType; rejectionCategory: RejectionCategory }> = [
@@ -147,7 +114,7 @@ export function isMediaSource(source?: Source | null): boolean {
   const name = source.name.toLowerCase()
   const domain = source.domain.toLowerCase()
   return (
-    MEDIA_DOMAINS.some((blocked) => domain === blocked || domain.endsWith(`.${blocked}`)) ||
+    Array.from(MEDIA_DOMAINS).some((blocked) => domain === blocked || domain.endsWith(`.${blocked}`)) ||
     MEDIA_SOURCE_PATTERNS.some((blocked) => name.includes(blocked))
   )
 }
