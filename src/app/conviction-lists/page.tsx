@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -542,7 +543,7 @@ export default function ConvictionListsPage() {
         <CardContent className="space-y-3 p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-[#E5E7EB]">{list.displayName}</h2>
+              <Link href={`/conviction-lists/${list.id}`} className="text-sm font-semibold text-[#E5E7EB] hover:underline">{list.displayName}</Link>
               <p className="mt-1 text-xs text-[#9CA3AF]">Institution: {list.institution}</p>
             </div>
             <div className="flex flex-wrap justify-end gap-1">
