@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { LoadingState } from '@/components/LoadingState'
 import { ErrorState } from '@/components/ErrorState'
-import { Activity, RefreshCw } from 'lucide-react'
+import { Activity, Database, RefreshCw } from 'lucide-react'
 
 interface ParserCoverageItem {
   name: string
@@ -18,8 +18,36 @@ interface ParserCoverageItem {
   sourceTier: string
 }
 
+interface FeedDiagnostics {
+  enabledSources: number
+  parserCoverage: ParserCoverageItem[]
+  latestScan: {
+    status?: string
+    startedAt?: string
+    finishedAt?: string
+    articleCandidatesAttempted: number
+    feedSaved: number
+    feedRejected: number
+    feedFailed: number
+  } | null
+  note: string
+}
+
+interface ConvictionListDiagnostics {
+  importedLists: number
+  totalMembers: number
+  needsReview: number
+  verified: number
+  seedAvailable: number
+  partialCandidates: number
+  listFinderWindow: { fromDate: string; toDate: string; yearLabel: number }
+  generatedQueryCount: number
+}
+
 interface DiagnosticsData {
   sources: { total: number; enabled: number; enabledCore: number; enabledMedia: number; expectedCore: number; parserCoverage: ParserCoverageItem[]; registeredParsers: number }
+  feed?: FeedDiagnostics
+  convictionLists?: ConvictionListDiagnostics
   latestScanRun?: {
     id: string
     startedAt?: string
@@ -186,6 +214,51 @@ export default function DiagnosticsPage() {
           <Fact label="Articles rejected" value={String(scan.articlesRejected)} />
           <Fact label="Articles failed" value={String(scan.articlesFailed)} />
           <Fact label="Media sources enabled" value={String(data.sources.enabledMedia)} />
+        </CardContent>
+      </Card>
+
+      {/* Feed Diagnostics */}
+      <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><Activity className="h-4 w-4" /> Feed Diagnostics</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          {data.feed ? (
+            <>
+              <div className="grid gap-2 md:grid-cols-4">
+                <Fact label="Enabled feed sources" value={String(data.feed.enabledSources)} />
+                <Fact label="Article candidates" value={String(data.feed.latestScan?.articleCandidatesAttempted ?? 0)} />
+                <Fact label="Feed saved" value={String(data.feed.latestScan?.feedSaved ?? 0)} />
+                <Fact label="Feed rejected" value={String(data.feed.latestScan?.feedRejected ?? 0)} />
+              </div>
+              <p className="text-xs italic text-muted-foreground">{data.feed.note}</p>
+            </>
+          ) : (
+            <p className="text-xs text-muted-foreground">Feed diagnostics not available.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Conviction List Diagnostics */}
+      <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2 text-sm"><Database className="h-4 w-4" /> Conviction List Diagnostics</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          {data.convictionLists ? (
+            <>
+              <div className="grid gap-2 md:grid-cols-4">
+                <Fact label="Imported lists" value={String(data.convictionLists.importedLists)} />
+                <Fact label="Total members" value={String(data.convictionLists.totalMembers)} />
+                <Fact label="Verified" value={String(data.convictionLists.verified)} />
+                <Fact label="Needs review" value={String(data.convictionLists.needsReview)} />
+              </div>
+              <div className="grid gap-2 md:grid-cols-4">
+                <Fact label="Seed available" value={String(data.convictionLists.seedAvailable)} />
+                <Fact label="Partial candidates" value={String(data.convictionLists.partialCandidates)} />
+                <Fact label="Generated queries" value={String(data.convictionLists.generatedQueryCount)} />
+                <Fact label="Finder window" value={`Dec 1, ${data.convictionLists.listFinderWindow.yearLabel - 1} → today`} />
+              </div>
+            </>
+          ) : (
+            <p className="text-xs text-muted-foreground">Conviction list diagnostics not available.</p>
+          )}
         </CardContent>
       </Card>
 

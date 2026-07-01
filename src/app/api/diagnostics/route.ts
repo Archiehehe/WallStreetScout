@@ -3,6 +3,7 @@ import { handleApiError } from '@/lib/api/responses'
 import type { ScanUrlResult } from '@/lib/storage/types'
 import { parserExistsForKey, getAllParserKeys } from '@/lib/sourceParsers'
 import { CORE_DOMAINS } from '@/lib/sourceRegistry'
+import { getSellSideListWindow, generateAllQueries, SEED_CANDIDATES, PARTIAL_CANDIDATES } from '@/lib/sellSideLists'
 
 interface BreakdownItem {
   count: number
@@ -114,6 +115,14 @@ export async function GET() {
       sourceTier: source.sourceTier ?? 'secondary',
     }))
 
+    const convictionListMembers = []
+    for (const list of convictionLists) {
+      const members = await store.getConvictionListMembers(list.id)
+      convictionListMembers.push(...members)
+    }
+
+    const sellSideWindow = getSellSideListWindow()
+
     return Response.json({
       sources: {
         total: sources.length,
@@ -143,6 +152,34 @@ export async function GET() {
       },
       sourceScans: scanRows,
       scanUrlResults,
+      feed: {
+        enabledSources: enabledSources.length,
+        parserCoverage: parserCoverage.filter((s) => s.enabled || s.sourceTier === 'core'),
+        latestScan: latestScanRun ? {
+          status: latestScanRun.status,
+          startedAt: latestScanRun.startedAt,
+          finishedAt: latestScanRun.finishedAt,
+          articleCandidatesAttempted: latestScanRun.articlesParsed ?? 0,
+          feedSaved: latestScanRun.articlesSaved ?? 0,
+          feedRejected: scanRows.reduce((sum, s) => sum + s.rejectedCount, 0),
+          feedFailed: scanRows.reduce((sum, s) => sum + s.failedCount, 0),
+        } : null,
+        note: '0 feed articles does not mean Conviction Lists are broken. Feed articles and Sell-Side Lists use separate pipelines.',
+      },
+      convictionLists: {
+        importedLists: convictionLists.length,
+        totalMembers: convictionListMembers.length,
+        needsReview: convictionLists.filter((l) => l.confidence === 'needs_review').length,
+        verified: convictionLists.filter((l) => l.confidence === 'verified').length,
+        seedAvailable: SEED_CANDIDATES.length,
+        partialCandidates: PARTIAL_CANDIDATES.length,
+        listFinderWindow: {
+          fromDate: sellSideWindow.fromDate.toISOString(),
+          toDate: sellSideWindow.toDate.toISOString(),
+          yearLabel: sellSideWindow.yearLabel,
+        },
+        generatedQueryCount: generateAllQueries().length,
+      },
       bootstrap: {
         convictionListsImported: convictionLists.length,
         managerHoldingsImported: managerHoldingsCount,

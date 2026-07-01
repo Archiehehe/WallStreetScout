@@ -241,9 +241,15 @@ export interface ConvictionList {
   sector?: string
   region?: string
   sourceUrl?: string
-  sourceType: 'official_page' | 'official_pdf' | 'manual' | 'api'
+  sourceType: 'official_page' | 'official_pdf' | 'media_summary' | 'manual' | 'csv' | 'paste' | 'api'
+  sourcePublisher?: string
   accessStatus?: string
   confidence: 'verified' | 'needs_review'
+  reviewStatus?: 'pending' | 'approved' | 'rejected' | 'needs_extraction'
+  rawSourceTitle?: string
+  rawSourceExcerpt?: string
+  importedFrom?: string
+  publishedAt?: string
   notes?: string
   createdAt: string
   updatedAt: string

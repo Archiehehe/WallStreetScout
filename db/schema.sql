@@ -310,14 +310,27 @@ create table if not exists conviction_lists (
   region text,
   source_url text,
   source_type text not null default 'manual',
+  source_publisher text,
   access_status text default 'public',
   confidence text default 'verified',
+  review_status text,
+  raw_source_title text,
+  raw_source_excerpt text,
+  imported_from text,
+  published_at timestamptz,
   notes text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
 alter table conviction_lists alter column id set default gen_random_uuid();
+
+alter table conviction_lists add column if not exists source_publisher text;
+alter table conviction_lists add column if not exists review_status text;
+alter table conviction_lists add column if not exists raw_source_title text;
+alter table conviction_lists add column if not exists raw_source_excerpt text;
+alter table conviction_lists add column if not exists imported_from text;
+alter table conviction_lists add column if not exists published_at timestamptz;
 
 do $$
 begin
@@ -326,7 +339,7 @@ begin
   ) then
     alter table conviction_lists
       add constraint conviction_lists_source_type_check
-      check (source_type in ('official_page', 'official_pdf', 'manual', 'api'));
+      check (source_type in ('official_page', 'official_pdf', 'media_summary', 'manual', 'csv', 'paste', 'api'));
   end if;
 
   if not exists (
@@ -335,6 +348,14 @@ begin
     alter table conviction_lists
       add constraint conviction_lists_confidence_check
       check (confidence in ('verified', 'needs_review'));
+  end if;
+
+  if not exists (
+    select 1 from pg_constraint where conname = 'conviction_lists_review_status_check'
+  ) then
+    alter table conviction_lists
+      add constraint conviction_lists_review_status_check
+      check (review_status is null or review_status in ('pending', 'approved', 'rejected', 'needs_extraction'));
   end if;
 end $$;
 

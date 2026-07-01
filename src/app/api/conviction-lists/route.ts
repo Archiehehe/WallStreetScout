@@ -1,9 +1,10 @@
 import { getStore } from '@/lib/storage'
 import { handleApiError } from '@/lib/api/responses'
 import { isScreenableEquityTicker, normalizeTicker } from '@/lib/utils/screenableTicker'
+import { getSellSideListWindow, generateAllQueries, SEED_CANDIDATES, PARTIAL_CANDIDATES } from '@/lib/sellSideLists'
 import type { NextRequest } from 'next/server'
 
-export async function GET() {
+export async function GET(_request: NextRequest) {
   try {
     const store = getStore()
     const lists = await store.getConvictionLists()
@@ -22,7 +23,24 @@ export async function GET() {
       })
     }
 
-    return Response.json(result)
+    const sellSideWindow = getSellSideListWindow()
+
+    return Response.json({
+      lists: result,
+      diagnostics: {
+        totalLists: result.length,
+        needsReview: result.filter((l) => l.confidence === 'needs_review').length,
+        verified: result.filter((l) => l.confidence === 'verified').length,
+        seedAvailable: SEED_CANDIDATES.length,
+        partialCandidates: PARTIAL_CANDIDATES.length,
+        listFinderWindow: {
+          fromDate: sellSideWindow.fromDate.toISOString(),
+          toDate: sellSideWindow.toDate.toISOString(),
+          yearLabel: sellSideWindow.yearLabel,
+        },
+        generatedQueryCount: generateAllQueries().length,
+      },
+    })
   } catch (error) {
     return handleApiError(error)
   }

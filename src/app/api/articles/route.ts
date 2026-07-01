@@ -3,7 +3,8 @@ import { getStore } from '@/lib/storage'
 import { DEFAULT_THRESHOLD } from '@/lib/ingestion/scorer'
 import { ArticleSubmitError, submitArticleUrl } from '@/lib/ingestion/submitArticle'
 import { errorResponse, handleApiError } from '@/lib/api/responses'
-import { qualifyArticleForFeed } from '@/lib/feedQualification'
+import { qualifyArticleForFeed, scoreFeedArticle } from '@/lib/feedQualification'
+import { parserExistsForKey } from '@/lib/sourceParsers'
 
 type FeedWindow = '7d' | '30d' | '90d' | 'all'
 
@@ -16,8 +17,11 @@ export async function GET(request: NextRequest) {
     const sector = searchParams.get('sector')
     const sourceType = searchParams.get('sourceType')
     const sourceTier = searchParams.get('sourceTier')
+    const sourceFilter = searchParams.get('source')
+    const tickerFilter = searchParams.get('ticker')?.toUpperCase()
+    const pageTypeFilter = searchParams.get('pageType')
     const saved = searchParams.get('saved')
-    const sort = searchParams.get('sort') ?? 'newest'
+    const sort = searchParams.get('sort') ?? 'feed_score'
     const { window, from, to } = parseWindow(searchParams)
 
     const articles = await store.getArticles({
@@ -46,6 +50,9 @@ export async function GET(request: NextRequest) {
       if (sector && extraction?.sector !== sector) continue
       if (sourceType && articleSourceType !== sourceType) continue
       if (sourceTier && (source?.sourceTier ?? 'secondary') !== sourceTier) continue
+      if (sourceFilter && source?.name !== sourceFilter && source?.domain !== sourceFilter) continue
+      if (tickerFilter && !tickers.includes(tickerFilter)) continue
+      if (pageTypeFilter && qualification.pageType !== pageTypeFilter) continue
       if (saved === 'true' && !isSaved) continue
       if (saved === 'false' && isSaved) continue
       if (search) {
@@ -63,6 +70,17 @@ export async function GET(request: NextRequest) {
         if (!haystack.includes(search)) continue
       }
 
+      const feedScore = scoreFeedArticle({
+        hasDedicatedParser: parserExistsForKey(source?.parserKey),
+        pageType: qualification.pageType,
+        tickerCount: tickers.length,
+        title: article.title,
+        publishedAt: article.publishedAt,
+        hasBasketLanguage: /\b(top picks|best ideas|conviction|focus list|stock picks|favorite stocks|beneficiaries)\b/i.test([article.title, extraction?.summary ?? ''].join(' ')),
+        extractionSummary: extraction?.summary,
+        cleanedText: article.cleanedText,
+      })
+
       result.push({
         id: article.id,
         title: article.title,
@@ -79,13 +97,16 @@ export async function GET(request: NextRequest) {
         pageType: qualification.pageType,
         tickers,
         score: article.articleScore,
+        feedScore: feedScore.score,
+        feedScoreBreakdown: feedScore.breakdown,
         reasonShown: qualification.reason,
         saved: isSaved,
       })
     }
 
     result.sort((a, b) => {
-      if (sort === 'highest_score') return b.score - a.score
+      if (sort === 'highest_score') return (b.feedScore ?? b.score) - (a.feedScore ?? a.score)
+      if (sort === 'feed_score') return (b.feedScore ?? 0) - (a.feedScore ?? 0)
       if (sort === 'most_tickers') return b.tickers.length - a.tickers.length
       return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
     })

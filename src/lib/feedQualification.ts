@@ -3,6 +3,7 @@ import type { ExtractionResult } from '@/lib/ingestion/extractor'
 import { getValidatedScreenableTickers, isScreenableEquityTicker } from '@/lib/utils/screenableTicker'
 import { MEDIA_DOMAINS, MEDIA_SOURCE_PATTERNS } from '@/lib/safety/disallowedDomains'
 
+
 export type FeedQualificationArticle = Pick<Article, 'title' | 'url'> & {
   cleanedText?: string
 }
@@ -205,4 +206,47 @@ function buildReason(pageType: PageType, tickerCount: number, source?: Source | 
 
   const tier = source?.sourceTier ?? 'institutional'
   return `${tickerCount} screenable tickers extracted from a ${tier} institutional research source.`
+}
+
+export interface FeedScoreInput {
+  hasDedicatedParser: boolean
+  pageType: PageType
+  tickerCount: number
+  title: string
+  publishedAt?: string
+  hasBasketLanguage: boolean
+  extractionSummary?: string
+  cleanedText?: string
+}
+
+export function scoreFeedArticle(input: FeedScoreInput): { score: number; breakdown: Record<string, number> } {
+  const breakdown: Record<string, number> = {}
+  let score = 0
+
+  if (input.hasDedicatedParser) { score += 3; breakdown.hasDedicatedParser = 3 }
+  if (input.pageType === 'stock_basket_research') { score += 3; breakdown.pageTypeBasket = 3 }
+  else if (input.pageType === 'sector_or_theme_research') { score += 2; breakdown.pageTypeSectorTheme = 2 }
+  if (input.hasBasketLanguage) { score += 2; breakdown.basketLanguage = 2 }
+  if (input.tickerCount >= 5) { score += 2; breakdown.tickerCountHigh = 2 }
+  else if (input.tickerCount >= 3) { score += 1; breakdown.tickerCountMid = 1 }
+
+  const text = [input.title, input.extractionSummary, input.cleanedText?.slice(0, 500)].filter(Boolean).join(' ')
+
+  if (input.publishedAt) {
+    const daysAgo = (Date.now() - new Date(input.publishedAt).getTime()) / 86400000
+    if (daysAgo <= 7) { score += 1; breakdown.recent7d = 1 }
+  }
+
+  if (/\b(equity|stock|sector|theme|outlook)\b/i.test(text)) { score += 1; breakdown.titleEquityTerms = 1 }
+
+  if (/\b(macro|economy|gdp|inflation|interest rate|central bank)\b/i.test(text) && !/\b(stock|equity|sector|company)\b/i.test(text)) {
+    score -= 3; breakdown.macroOnly = -3
+  }
+
+  const poorTextPattern = /^\s*(404|error|not found|access denied|redirecting)\s*$/i
+  if (poorTextPattern.test(text) || (input.cleanedText && input.cleanedText.length < 100)) {
+    score -= 5; breakdown.poorText = -5
+  }
+
+  return { score, breakdown }
 }
