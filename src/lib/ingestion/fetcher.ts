@@ -6,6 +6,7 @@ interface FetchedUrl {
   sourceId: string
   publishedAt?: string
   title?: string
+  urlDiscoveryMethod?: string
 }
 
 const DEFAULT_MAX_URLS_PER_SOURCE = 8
@@ -18,6 +19,7 @@ export async function fetchUrlsFromSource(source: Source): Promise<FetchedUrl[]>
   if (source.rssUrl) {
     try {
       const rssUrls = await fetchRss(source.rssUrl, source.id)
+      rssUrls.forEach((u) => { u.urlDiscoveryMethod = 'rss' })
       urls.push(...rssUrls)
     } catch (err) {
       console.error(`Failed to fetch RSS for ${source.name}:`, err)
@@ -27,11 +29,14 @@ export async function fetchUrlsFromSource(source: Source): Promise<FetchedUrl[]>
   if (source.sitemapUrl) {
     try {
       const sitemapUrls = await fetchSitemap(source.sitemapUrl, source.id)
+      sitemapUrls.forEach((u) => { u.urlDiscoveryMethod = 'sitemap' })
       urls.push(...sitemapUrls)
     } catch (err) {
       console.error(`Failed to fetch sitemap for ${source.name}:`, err)
     }
   }
+
+
 
   return prioritizeFetchedUrls(urls)
 }

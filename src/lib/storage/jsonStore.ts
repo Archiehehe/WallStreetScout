@@ -3,7 +3,7 @@ import type {
   Store, Source, Article, ArticleExtraction, Idea,
   Basket, BasketMember, WatchlistItem, MetricsSnapshot,
   UserFeedback, ScanRun, ConvictionList, ConvictionListMember,
-  Manager, ManagerHolding, ThirteenFOverlap, SourceScanResult
+  Manager, ManagerHolding, ThirteenFOverlap, SourceScanResult, ScanUrlResult
 } from './types'
 
 const DB_PATH = 'data/local-dev-db'
@@ -274,6 +274,18 @@ export function createJsonStore(): Store {
       await writeCollection('source_scan_results', items)
       return item
     },
+    async createScanUrlResult(data) {
+      const items = await readCollection<ScanUrlResult>('scan_url_results')
+      const item: ScanUrlResult = { ...data, id: uuidv4(), createdAt: now() }
+      items.push(item)
+      await writeCollection('scan_url_results', items)
+      return item
+    },
+    async getScanUrlResults(scanRunId) {
+      const items = await readCollection<ScanUrlResult>('scan_url_results')
+      return items.filter(item => item.scanRunId === scanRunId)
+    },
+
     async getLatestSourceScanResults() {
       const items = await readCollection<SourceScanResult>('source_scan_results')
       const bySource = new Map<string, SourceScanResult>()

@@ -1,14 +1,20 @@
 import type { Source } from '@/lib/storage/types'
 
 const STOPLIST = new Set([
-  'HICP', 'APP', 'PEPP', 'NLP', 'RAFT', 'IG', 'OAS', 'ABF', 'ECB', 'CPI', 'GDP', 'PMI',
-  'QE', 'QT', 'FX', 'EM', 'DM', 'AI', 'ML', 'LLM', 'ETF', 'ETFS', 'CEF', 'NAV', 'AUM',
-  'PE', 'VC', 'IRR', 'CAGR', 'YOY', 'QOQ', 'FED', 'BOE', 'BOJ', 'SEC', 'USD', 'EUR',
-  'JPY', 'GBP', 'RSS', 'PDF', 'FAQ', 'CEO', 'CFO', 'COO', 'IPO', 'IR', 'PR', 'FY',
-  'USA', 'US', 'UK', 'EU', 'ADR', 'ADS', 'NYSE', 'NASDAQ', 'AMEX', 'SPY', 'QQQ', 'DIA',
-  'IWM', 'VOO', 'VTI', 'VT', 'VEA', 'VWO', 'BND', 'AGG', 'TLT', 'IEF', 'HYG', 'LQD',
-  'GLD', 'SLV', 'USO', 'UNG', 'BITO', 'GBTC', 'IBIT', 'ETH', 'BTC', 'SOL', 'USDC', 'USDT',
-  'ESG', 'SMA', 'SMAS',
+  'HICP', 'APP', 'PEPP', 'NLP', 'RAFT', 'IG', 'OAS', 'ABF', 'AAT',
+  'ECB', 'CPI', 'GDP', 'PMI', 'QE', 'QT', 'FX', 'EM', 'DM', 'AI', 'ML', 'LLM',
+  'ETF', 'ETFS', 'CEF', 'NAV', 'AUM', 'ESG', 'SMA', 'SMAS', 'BPS', 'YTD', 'TTM', 'MRQ',
+  'NWC', 'PPE', 'ROIC', 'ROE', 'ROA', 'EBIT', 'EBITDA', 'FCF', 'CAPEX',
+  'PE', 'VC', 'IRR', 'CAGR', 'YOY', 'QOQ',
+  'FED', 'BOE', 'BOJ', 'BPS',
+  'SEC', 'USD', 'EUR', 'JPY', 'GBP',
+  'RSS', 'PDF', 'FAQ', 'CEO', 'CFO', 'COO', 'IPO', 'IR', 'PR', 'FY',
+  'USA', 'US', 'UK', 'EU',
+  'ADR', 'ADS', 'NYSE', 'NASDAQ', 'AMEX',
+  'SPY', 'QQQ', 'DIA', 'IWM', 'VOO', 'VTI', 'VT', 'VEA', 'VWO',
+  'BND', 'AGG', 'TLT', 'IEF', 'HYG', 'LQD',
+  'GLD', 'SLV', 'USO', 'UNG', 'BITO', 'GBTC', 'IBIT',
+  'ETH', 'BTC', 'SOL', 'USDC', 'USDT',
   'APAC', 'EMEA', 'ASIC', 'TNTC', 'NTSA', 'NTSI', 'EEA',
 ])
 

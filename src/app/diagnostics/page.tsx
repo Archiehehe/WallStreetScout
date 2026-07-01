@@ -31,6 +31,9 @@ interface DiagnosticsData {
     articlesRejected: number
     articlesFailed: number
     commonRejectionReasons: Array<{ reason: string; count: number }>
+    rejectionBreakdown?: Array<{ category: string; count: number; exampleSource: string; exampleUrl: string; pageType: string }>
+    failureBreakdown?: Array<{ error: string; count: number; exampleSource: string; exampleUrl: string; httpStatus?: number }>
+    discoveryMethodBreakdown?: Array<{ method: string; count: number }>
   }
   sourceScans: Array<{
     sourceName: string
@@ -46,6 +49,20 @@ interface DiagnosticsData {
     finishedAt?: string
     startedAt: string
   }>
+  scanUrlResults?: Array<{
+    sourceName?: string
+    sourceDomain?: string
+    url: string
+    urlDiscoveryMethod?: string
+    status: string
+    httpStatus?: number
+    rejectionCategory?: string
+    rejectionReason?: string
+    rawExtractedTickers?: string[]
+    screenableTickers?: string[]
+    pageType?: string
+    error?: string
+  }>
   bootstrap: { convictionListsImported: number; managerHoldingsImported: number }
 }
 
@@ -53,6 +70,8 @@ export default function DiagnosticsPage() {
   const [data, setData] = useState<DiagnosticsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [urlFilter, setUrlFilter] = useState<string>('all')
+  const [sourceFilter, setSourceFilter] = useState<string>('all')
 
   const load = async () => {
     try {
@@ -74,6 +93,21 @@ export default function DiagnosticsPage() {
   if (loading || !data) return <LoadingState />
 
   const scan = data.scanSummary
+  const rejectionBreakdown = scan.rejectionBreakdown ?? []
+  const failureBreakdown = scan.failureBreakdown ?? []
+  const discoveryMethodBreakdown = scan.discoveryMethodBreakdown ?? []
+  const scanUrlResults = data.scanUrlResults ?? []
+
+  const uniqueSources = [...new Set(scanUrlResults.map(r => r.sourceName ?? r.sourceDomain ?? 'unknown').filter(Boolean))]
+
+  const filteredUrlResults = scanUrlResults.filter(r => {
+    if (urlFilter !== 'all' && r.status !== urlFilter) return false
+    if (sourceFilter !== 'all') {
+      const sourceVal = r.sourceName ?? r.sourceDomain ?? ''
+      if (sourceVal !== sourceFilter) return false
+    }
+    return true
+  })
 
   return (
     <div className="space-y-5">
@@ -111,19 +145,148 @@ export default function DiagnosticsPage() {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="text-sm">Common Rejection Reasons</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-sm">Rejection Breakdown</CardTitle></CardHeader>
         <CardContent>
-          {scan.commonRejectionReasons.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No rejection reasons recorded yet.</p>
+          {rejectionBreakdown.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No rejection data available yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Count</TableHead>
+                  <TableHead>Example Source</TableHead>
+                  <TableHead>Example URL</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rejectionBreakdown.map((item) => (
+                  <TableRow key={item.category}>
+                    <TableCell className="text-xs font-medium">{item.category}</TableCell>
+                    <TableCell className="text-xs">{item.count}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{item.exampleSource}</TableCell>
+                    <TableCell className="max-w-[200px] truncate text-xs text-muted-foreground" title={item.exampleUrl}>{item.exampleUrl}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-sm">Failure Breakdown</CardTitle></CardHeader>
+        <CardContent>
+          {failureBreakdown.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No failure data available yet.</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Error</TableHead>
+                  <TableHead>Count</TableHead>
+                  <TableHead>Example Source</TableHead>
+                  <TableHead>Example URL</TableHead>
+                  <TableHead>HTTP Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {failureBreakdown.map((item, i) => (
+                  <TableRow key={i}>
+                    <TableCell className="max-w-[300px] truncate text-xs" title={item.error}>{item.error}</TableCell>
+                    <TableCell className="text-xs">{item.count}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{item.exampleSource}</TableCell>
+                    <TableCell className="max-w-[200px] truncate text-xs text-muted-foreground" title={item.exampleUrl}>{item.exampleUrl}</TableCell>
+                    <TableCell className="text-xs">{item.httpStatus ?? '-'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-sm">URL Discovery Method Breakdown</CardTitle></CardHeader>
+        <CardContent>
+          {discoveryMethodBreakdown.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No discovery method data available yet.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {scan.commonRejectionReasons.map((item) => (
-                <Badge key={item.reason} variant="outline" className="text-xs">
-                  {item.reason}: {item.count}
+              {discoveryMethodBreakdown.map((item) => (
+                <Badge key={item.method} variant="outline" className="text-xs">
+                  {item.method}: {item.count}
                 </Badge>
               ))}
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="text-sm">Attempted URLs (Latest Scan)</CardTitle></CardHeader>
+        <CardContent className="space-y-2">
+          <div className="flex gap-2">
+            <select
+              className="rounded border border-[#1F1F1F] bg-[#0A0A0A] px-2 py-1 text-xs text-[#E5E7EB]"
+              value={urlFilter}
+              onChange={(e) => setUrlFilter(e.target.value)}
+            >
+              <option value="all">All statuses</option>
+              <option value="saved">Saved</option>
+              <option value="rejected">Rejected</option>
+              <option value="failed">Failed</option>
+              <option value="skipped_seen">Skipped (duplicate)</option>
+            </select>
+            <select
+              className="rounded border border-[#1F1F1F] bg-[#0A0A0A] px-2 py-1 text-xs text-[#E5E7EB]"
+              value={sourceFilter}
+              onChange={(e) => setSourceFilter(e.target.value)}
+            >
+              <option value="all">All sources</option>
+              {uniqueSources.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Source</TableHead>
+                  <TableHead>URL</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>HTTP</TableHead>
+                  <TableHead>Rejection</TableHead>
+                  <TableHead>Page Type</TableHead>
+                  <TableHead>Raw Tickers</TableHead>
+                  <TableHead>Screenable</TableHead>
+                  <TableHead>Error</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredUrlResults.length === 0 ? (
+                  <TableRow><TableCell colSpan={10} className="text-xs text-muted-foreground">No URL results found.</TableCell></TableRow>
+                ) : (
+                  filteredUrlResults.map((r, i) => (
+                    <TableRow key={i}>
+                      <TableCell className="text-xs font-medium">{r.sourceName ?? r.sourceDomain ?? '-'}</TableCell>
+                      <TableCell className="max-w-[200px] truncate text-xs text-muted-foreground" title={r.url}>{r.url}</TableCell>
+                      <TableCell className="text-xs">{r.urlDiscoveryMethod ?? '-'}</TableCell>
+                      <TableCell className="text-xs">{r.status}</TableCell>
+                      <TableCell className="text-xs">{r.httpStatus ?? '-'}</TableCell>
+                      <TableCell className="text-xs">{r.rejectionCategory ?? '-'}</TableCell>
+                      <TableCell className="text-xs">{r.pageType ?? '-'}</TableCell>
+                      <TableCell className="text-xs">{(r.rawExtractedTickers ?? []).slice(0, 5).join(', ')}{(r.rawExtractedTickers ?? []).length > 5 ? '...' : ''}</TableCell>
+                      <TableCell className="text-xs">{(r.screenableTickers ?? []).slice(0, 5).join(', ')}{(r.screenableTickers ?? []).length > 5 ? '...' : ''}</TableCell>
+                      <TableCell className="max-w-[150px] truncate text-xs text-red-400" title={r.error}>{r.error ?? '-'}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 

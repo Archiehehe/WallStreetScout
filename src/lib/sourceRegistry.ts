@@ -11,6 +11,9 @@ export interface SourceRegistryEntry extends Omit<Source, 'id' | 'createdAt' | '
   allowTickerlessThemePieces?: boolean
   category?: string
   accessNote?: string
+  allowedPathPatterns?: string[]
+  blockedPathPatterns?: string[]
+  preferredDiscoveryMethod?: string
 }
 
 export const CORE_DOMAINS = new Set([
@@ -108,6 +111,9 @@ export function toStarterSource(source: SourceRegistryEntry): Omit<Source, 'id' 
     allowTickerlessThemePieces: source.allowTickerlessThemePieces,
     category: source.category,
     accessNote: source.accessNote,
+    allowedPathPatterns: source.allowedPathPatterns,
+    blockedPathPatterns: source.blockedPathPatterns,
+    preferredDiscoveryMethod: source.preferredDiscoveryMethod,
     qualityScore: source.qualityScore,
     notes: source.notes,
   }

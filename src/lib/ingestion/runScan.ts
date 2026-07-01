@@ -103,6 +103,17 @@ export async function runScan(): Promise<ScanResult> {
     .slice(0, maxTotalUrls)
 
   const itemResults = await runBatched(fetchedItems, concurrency, async ({ source, fetched }) => {
+    const urlResult = {
+      scanRunId: scanRun.id,
+      sourceId: source.id,
+      sourceName: source.name,
+      sourceDomain: source.domain,
+      url: fetched.url,
+      normalizedUrl: fetched.url,
+      urlDiscoveryMethod: fetched.urlDiscoveryMethod ?? 'unknown',
+      rawExtractedTickers: [] as string[],
+      screenableTickers: [] as string[],
+    }
     try {
       const result = await submitArticleUrl(fetched.url, {
         source,
@@ -111,6 +122,7 @@ export async function runScan(): Promise<ScanResult> {
       })
 
       if ('duplicate' in result && result.duplicate) {
+        await store.createScanUrlResult({ ...urlResult, status: 'skipped_seen', rejectionCategory: 'duplicate', rejectionReason: 'Article already exists in DB' })
         return {
           ok: true,
           source: source.name,
@@ -123,6 +135,7 @@ export async function runScan(): Promise<ScanResult> {
       }
 
       if (result.saved) {
+        await store.createScanUrlResult({ ...urlResult, status: 'saved', screenableTickers: result.extractedTickers ?? [] })
         return {
           ok: true,
           source: source.name,
@@ -133,6 +146,18 @@ export async function runScan(): Promise<ScanResult> {
         }
       }
 
+      const rejectionReason = ('reason' in result ? result.reason : 'duplicate') as string
+      const hasExtractedTickers = 'extractedTickers' in result
+      const extractedTickers = hasExtractedTickers ? result.extractedTickers as unknown as string[] : []
+      await store.createScanUrlResult({
+        ...urlResult,
+        status: 'rejected',
+        rejectionCategory: rejectionReason,
+        rejectionReason,
+        rawExtractedTickers: extractedTickers,
+        screenableTickers: [],
+        httpStatus: 200,
+      })
       return {
         ok: true,
         source: source.name,
@@ -140,16 +165,24 @@ export async function runScan(): Promise<ScanResult> {
         sourceDomain: source.domain,
         url: fetched.url,
         rejected: true,
-        reason: 'reason' in result ? result.reason : 'duplicate',
+        reason: rejectionReason,
       }
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      await store.createScanUrlResult({
+        ...urlResult,
+        status: 'failed',
+        error: errorMsg,
+        rejectionCategory: 'fetch_or_parse_error',
+        rejectionReason: errorMsg,
+      })
       return {
         ok: false,
         source: source.name,
         sourceId: source.id,
         sourceDomain: source.domain,
         url: fetched.url,
-        error: error instanceof Error ? error.message : String(error),
+        error: errorMsg,
       }
     }
   })

@@ -120,6 +120,9 @@ for (const source of sources) {
       allow_tickerless_theme_pieces,
       category,
       access_note,
+      allowed_path_patterns,
+      blocked_path_patterns,
+      preferred_discovery_method,
       quality_score,
       notes,
       updated_at
@@ -139,6 +142,9 @@ for (const source of sources) {
       ${source.allowTickerlessThemePieces ?? false},
       ${source.category ?? null},
       ${source.accessNote ?? null},
+      ${source.allowedPathPatterns ?? []},
+      ${source.blockedPathPatterns ?? []},
+      ${source.preferredDiscoveryMethod ?? null},
       ${source.qualityScore ?? 5},
       ${source.notes ?? null},
       now()
@@ -158,6 +164,9 @@ for (const source of sources) {
       allow_tickerless_theme_pieces = excluded.allow_tickerless_theme_pieces,
       category = excluded.category,
       access_note = excluded.access_note,
+      allowed_path_patterns = excluded.allowed_path_patterns,
+      blocked_path_patterns = excluded.blocked_path_patterns,
+      preferred_discovery_method = excluded.preferred_discovery_method,
       quality_score = excluded.quality_score,
       notes = excluded.notes,
       updated_at = now()

@@ -33,6 +33,9 @@ alter table sources add column if not exists strict_evidence_required boolean no
 alter table sources add column if not exists allow_tickerless_theme_pieces boolean not null default false;
 alter table sources add column if not exists category text;
 alter table sources add column if not exists access_note text;
+alter table sources add column if not exists allowed_path_patterns text[] default '{}';
+alter table sources add column if not exists blocked_path_patterns text[] default '{}';
+alter table sources add column if not exists preferred_discovery_method text;
 
 create unique index if not exists idx_sources_domain_unique on sources (lower(domain));
 
@@ -264,6 +267,33 @@ alter table source_scan_results alter column id set default gen_random_uuid();
 create index if not exists idx_source_scan_results_scan_run on source_scan_results(scan_run_id);
 create index if not exists idx_source_scan_results_source on source_scan_results(source_id);
 create index if not exists idx_source_scan_results_started_at on source_scan_results(started_at desc);
+
+create table if not exists scan_url_results (
+  id uuid primary key default gen_random_uuid(),
+  scan_run_id text,
+  source_id text,
+  source_name text,
+  source_domain text,
+  url text not null,
+  normalized_url text,
+  url_discovery_method text,
+  status text not null,
+  http_status integer,
+  rejection_category text,
+  rejection_reason text,
+  page_type text,
+  raw_extracted_tickers text[] default '{}',
+  screenable_tickers text[] default '{}',
+  preview_quality text,
+  error text,
+  created_at timestamptz default now()
+);
+
+alter table scan_url_results alter column id set default gen_random_uuid();
+create index if not exists idx_scan_url_results_scan_run on scan_url_results(scan_run_id);
+create index if not exists idx_scan_url_results_source on scan_url_results(source_id);
+create index if not exists idx_scan_url_results_status on scan_url_results(status);
+create index if not exists idx_scan_url_results_rejection on scan_url_results(rejection_category);
 
 create table if not exists conviction_lists (
   id uuid primary key default gen_random_uuid(),

@@ -260,6 +260,14 @@ export function createNeonStore(): Store {
       const [query, params] = insertQuery('source_scan_results', input as Row)
       return one(query, params)
     },
+    async createScanUrlResult(input) {
+      const [query, params] = insertQuery('scan_url_results', input as Row)
+      return one(query, params)
+    },
+    async getScanUrlResults(scanRunId) {
+      return many('select * from scan_url_results where scan_run_id = $1 order by created_at', [scanRunId])
+    },
+
     async getLatestSourceScanResults() {
       return many(`
         select distinct on (source_id) *

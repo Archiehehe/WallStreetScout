@@ -14,6 +14,9 @@ export interface Source {
   allowTickerlessThemePieces?: boolean
   category?: string
   accessNote?: string
+  allowedPathPatterns?: string[]
+  blockedPathPatterns?: string[]
+  preferredDiscoveryMethod?: string
   qualityScore: number
   notes?: string
   createdAt: string
@@ -201,6 +204,27 @@ export interface SourceScanResult {
   createdAt: string
 }
 
+export interface ScanUrlResult {
+  id: string
+  scanRunId: string
+  sourceId?: string
+  sourceName?: string
+  sourceDomain?: string
+  url: string
+  normalizedUrl?: string
+  urlDiscoveryMethod?: string
+  status: string
+  httpStatus?: number
+  rejectionCategory?: string
+  rejectionReason?: string
+  pageType?: string
+  rawExtractedTickers?: string[]
+  screenableTickers?: string[]
+  previewQuality?: string
+  error?: string
+  createdAt: string
+}
+
 export interface ConvictionList {
   id: string
   slug: string
@@ -330,6 +354,8 @@ export interface Store {
   getScanRuns(limit?: number): Promise<ScanRun[]>
   createSourceScanResult(result: Omit<SourceScanResult, 'id' | 'createdAt'>): Promise<SourceScanResult>
   getLatestSourceScanResults(): Promise<SourceScanResult[]>
+  createScanUrlResult(result: Omit<ScanUrlResult, 'id' | 'createdAt'>): Promise<ScanUrlResult>
+  getScanUrlResults(scanRunId: string): Promise<ScanUrlResult[]>
 
   // Conviction Lists
   getConvictionLists(): Promise<ConvictionList[]>

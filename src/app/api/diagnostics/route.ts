@@ -1,5 +1,23 @@
 import { getStore } from '@/lib/storage'
 import { handleApiError } from '@/lib/api/responses'
+import type { ScanUrlResult } from '@/lib/storage/types'
+
+interface BreakdownItem {
+  count: number
+  exampleSource: string
+  exampleUrl: string
+  pageType?: string
+  error?: string
+  httpStatus?: number
+  category?: string
+  rawExtractedTickers?: string[]
+  screenableTickers?: string[]
+}
+
+interface MethodBreakdownItem {
+  method: string
+  count: number
+}
 
 export async function GET() {
   try {
@@ -21,6 +39,55 @@ export async function GET() {
     const scanRows = latestRunSourceScans.length > 0 ? latestRunSourceScans : sourceScans
     const rejectionReasons = extractRejectionReasons(latestScanRun?.errorsJson)
 
+    // Get scan URL results for the latest scan run
+    let scanUrlResults: ScanUrlResult[] = []
+    let rejectionBreakdown: BreakdownItem[] = []
+    let failureBreakdown: BreakdownItem[] = []
+    let discoveryMethodBreakdown: MethodBreakdownItem[] = []
+    if (latestScanRunId) {
+      try {
+        scanUrlResults = await store.getScanUrlResults(latestScanRunId)
+        // Build rejection breakdown
+        const rejectMap = new Map<string, { count: number; exampleSource: string; exampleUrl: string; rawExtractedTickers: string[]; screenableTickers: string[]; pageType: string }>()
+        for (const r of scanUrlResults) {
+          if (r.status === 'rejected' && r.rejectionCategory) {
+            const existing = rejectMap.get(r.rejectionCategory) ?? { count: 0, exampleSource: '', exampleUrl: '', rawExtractedTickers: [], screenableTickers: [], pageType: '' }
+            existing.count++
+            if (!existing.exampleSource) existing.exampleSource = r.sourceName ?? r.sourceDomain ?? ''
+            if (!existing.exampleUrl) existing.exampleUrl = r.url
+            if (!existing.pageType) existing.pageType = r.pageType ?? ''
+            rejectMap.set(r.rejectionCategory, existing)
+          }
+        }
+        rejectionBreakdown = Array.from(rejectMap.entries()).map(([category, data]) => ({ category, ...data })).sort((a, b) => b.count - a.count)
+
+        // Build failure breakdown
+        const failMap = new Map<string, { count: number; exampleSource: string; exampleUrl: string; httpStatus?: number }>()
+        for (const r of scanUrlResults) {
+          if (r.status === 'failed' && r.error) {
+            const key = r.error.slice(0, 120)
+            const existing = failMap.get(key) ?? { count: 0, exampleSource: '', exampleUrl: '', httpStatus: undefined }
+            existing.count++
+            if (!existing.exampleSource) existing.exampleSource = r.sourceName ?? r.sourceDomain ?? ''
+            if (!existing.exampleUrl) existing.exampleUrl = r.url
+            if (existing.httpStatus === undefined) existing.httpStatus = r.httpStatus
+            failMap.set(key, existing)
+          }
+        }
+        failureBreakdown = Array.from(failMap.entries()).map(([error, data]) => ({ error, ...data })).sort((a, b) => b.count - a.count)
+
+        // Build discovery method breakdown
+        const discMap = new Map<string, number>()
+        for (const r of scanUrlResults) {
+          const method = r.urlDiscoveryMethod ?? 'unknown'
+          discMap.set(method, (discMap.get(method) ?? 0) + 1)
+        }
+        discoveryMethodBreakdown = Array.from(discMap.entries()).map(([method, count]) => ({ method, count })).sort((a, b) => b.count - a.count)
+      } catch {
+        // scan_url_results table may not exist yet
+      }
+    }
+
     return Response.json({
       sources: {
         total: sources.length,
@@ -40,8 +107,12 @@ export async function GET() {
         articlesRejected: scanRows.reduce((sum, scan) => sum + scan.rejectedCount, 0),
         articlesFailed: scanRows.reduce((sum, scan) => sum + scan.failedCount, 0),
         commonRejectionReasons: rejectionReasons,
+        rejectionBreakdown,
+        failureBreakdown,
+        discoveryMethodBreakdown,
       },
       sourceScans: scanRows,
+      scanUrlResults,
       bootstrap: {
         convictionListsImported: convictionLists.length,
         managerHoldingsImported: managerHoldingsCount,
