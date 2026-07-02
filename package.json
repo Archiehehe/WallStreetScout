@@ -16,7 +16,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test",
+    "test:sell-side": "node --import tsx --test tests/sell-side.test.ts",
+    "smoke:sell-side": "node --import tsx scripts/smoke-sell-side.ts",
+    "guardrails:sell-side": "node --import tsx scripts/check-sell-side-guardrails.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
@@ -40,6 +44,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
+    "tsx": "^4.20.3",
     "typescript": "^5"
   }
 }

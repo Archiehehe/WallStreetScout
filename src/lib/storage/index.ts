@@ -21,7 +21,13 @@ export function isNeonConfigured(): boolean {
 
 export function getStorageMode(): StorageMode {
   if (isNeonConfigured()) return 'neon'
-  if (process.env.NODE_ENV === 'development') return 'local-dev'
+
+  const explicitlyUseLocalStore = process.env.WALLSTREETSCOUT_USE_LOCAL_STORE === '1'
+  if (process.env.NODE_ENV === 'production') return 'misconfigured'
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' || explicitlyUseLocalStore) {
+    return 'local-dev'
+  }
+
   return 'misconfigured'
 }
 
